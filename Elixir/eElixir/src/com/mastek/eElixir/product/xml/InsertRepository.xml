@@ -1,0 +1,1581 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-root SYSTEM "SqlRepository.dtd">
+<!--  Change History:
+ * 
+ * SR No.| Modified By   | Modification Date | Description
+ *
+ * 1     |Ashish R       |30/05/2018              | TRM_MBF_CR372_239| Code Added for Golden Retirement
+ *2	     |Ketan More	 |02/07/2018		      | Jumbo ILP Surrender Charges Change - TRM_URF_21454_56_57_241
+ *3      |Sweta N   |14-Aug-2019  |Sustainability Changes:added NISSUSTPRMAPPLC column
+ *4      |Athsal Nadar   |20/04/2021|TRM_MBF_URF27389_311_P2|Protect 88 PH2
+ *5      |Pranav    |01/03/2022                   | added nprmpmtyears,npolterm: FSD_MaxiPro_Campaign_v1.1
+ *6      | Pranav   |18-4-2022                    | Added for Waiting Period and Waiting Unit
+ *7      |Pranav    |01-06-2022                   | TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility
+ *8      |Manjunath H    |10-09-2022	   |TRM_MBF_URF_24268_338_MULT_WKL_RATE|Addition of new fields.
+ * 9     |Rohit#10    |04/05/2023             |TRM_MBF_ECNURF_1379_345_P1||insert for product unit rule for epf phase-2
+ *10     |SanketP        |23-06-2023          |TRM_MBF_URF_24268_346|Loyalty Bonus CR|Added Fundtype Field
+-->
+
+
+<sql-root>
+
+	
+	<!-- start:08/04/2009:TRM_MBF_POLBEN_00001:sonalb:addedd nIsDivApplc-->
+   <sql Id="InsertProductEntry">
+	 <query>INSERT INTO prd_key_info(strprodcd,nprodtype,nprodver,nrisktype,
+		strcurrcd,cbontype,strriskcd,dtefffrom,strcountrycd,strprodname,
+		nsplfeatureflg,strstatecd,strprodline,strproddesc,strcreatedby,nisrta,
+		nprodstat,strremark,nisjuvnpol,nValGrp,nIsYrlyRenewable,nPrdCatg,ncompanyind,nIsTakafulProd,dtprodstatchange,dtcreated,strprodothname,nIsDivApplc)
+		VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,Sysdate,Sysdate,?,?)
+	</query>
+   </sql>
+   <!-- end:08/04/2009:TRM_MBF_POLBEN_00001:sonalb-->
+   <sql Id="Insert_PRD_INFO_1">
+	<query>INSERT INTO prd_info_1(strprodcd,nprodver,strcreatedby,dtcreated) 
+	VALUES(?,?,?,Sysdate)</query>
+   </sql>
+   <sql Id="Insert_PRD_INFO_2">
+	<query>INSERT INTO prd_info_2(strprodcd,nprodver,strcreatedby,dtcreated) 
+	VALUES(?,?,?,Sysdate)</query>
+   </sql>
+   <sql Id="Insert_PRD_INFO_3">
+	<query>INSERT INTO prd_info_3(strprodcd,nprodver,strcreatedby,dtcreated) 
+	VALUES(?,?,?,Sysdate)</query>
+   </sql>
+   <sql Id="Insert_PRD_INFO_4">
+	<query>INSERT INTO prd_info_4(strprodcd,nprodver,strcreatedby,dtcreated) 
+	VALUES(?,?,?,Sysdate)</query>
+   </sql>
+   <sql Id="Insert_PRD_INFO_5">
+	<query>INSERT INTO prd_info_5(strprodcd,nprodver,strcreatedby,dtcreated) 
+	VALUES(?,?,?,Sysdate)</query>
+   </sql>
+   <sql Id="ConversionInsert">
+	<query>INSERT INTO prd_conv_dtl(lcnvdtlseq,strprodcd,nprodver,strcnvprodcd,
+               ncnvprodver,ncnvuptopolyears,ncnvmaxattage,strcreatedby,dtcreated,NCNVYRSBEFOREEXP) 
+	       VALUES(?,?,?,?,?,?,?,?,?,?)
+        </query>
+   </sql>
+   <!--Start:18/09/2007:MaybanPH1:anshult:<TaskID>:PRD_TermUptoMaturity-->
+   <sql Id="TermInsert">
+	<query>INSERT INTO prd_mat_ageterm(ltrmdtlseq,strprodcd,nprodver,nmaturitytype,
+               ngendercd,ntermvalue,strcreatedby,dtcreated,nclienttype) 
+	       VALUES(?,?,?,?,?,?,?,?,?)
+        </query>
+   </sql>
+   <!--End :18/09/2007:MaybanPH1:anshult-->
+   <sql Id="Insert_PRD_VAL_HDR">
+	<query>INSERT INTO prd_val_hdr(strprodcd,nprodver,nvaluetype,ntblformlflg,strtblformlcd,
+		strcreatedby,dtcreated,nFormulaVer) 
+	VALUES(?,?,?,?,?,?,Sysdate,?)</query>
+   </sql>
+   <!-- //start:12/05/2009:TRM_MBF_ILSR_00001:sonalb:CR11: client type -->
+   <sql Id="InsertAgeBasedTerm">
+	<query>
+      	INSERT INTO prd_minmax_eage(lminmaxentryageseq,
+            strprodcd,nprodver,ntermfrom,ntermto,nminentryagemale,
+            nmaxentryagemale,nminentryagefemale,
+            nmaxentryagefemale,strcreatedby,dtcreated,nlifeseq,NCLIENTTYPE)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+	</query>
+  </sql>
+  <!-- //end:12/05/2009:TRM_MBF_ILSR_00001:sonalb -->
+   <sql Id="InsertIndexAge">
+	<query>
+           INSERT INTO prd_index_age(lindexageseq, strprodcd, 
+           nprodver,nagedifffrom,nagediffto,strcreatedby,
+           nvalueaddtolowage,dtcreated)
+           VALUES(?,?,?,?,?,?,?,?)
+	</query>
+  </sql>
+     <!--Start:12/10/2007:MaybanPH1:anilg:<TaskID>:Added STRRIDERGROUPID
+                                                 for storing group value  for Id="ProductCombinationInsert"-->
+  <!-- Start:02-Jan-2018:TRM_MBF_URF20283_230:Added NISALLOWFORGIO -->
+  <sql Id="ProductCombinationInsert">
+	<query>INSERT INTO prd_cmb(strprodcd,
+							   nprodver,
+							   strriderprodcd,
+							   nriderprodver,
+							   nexclmandatoryflg,
+							   nonwhom,
+							   STRRIDERGROUPID,
+							   nlifeseq,
+							   strcreatedby,
+							   dtcreated
+							   ,NISALLOWFORGIO)
+		VALUES(?,?,?,?,?,?,?,?,?,Sysdate,?)
+	</query>
+   </sql>
+   <!-- End:02-Jan-2018:TRM_MBF_URF20283_230:Added NISALLOWFORGIO -->
+     <!--Start:12/11/2007:MaybanPH1:anilg:<TaskID>:Added 
+                                                 for storing rider group data-->   
+  <sql Id="RiderGroupInsert">
+	<query>INSERT INTO PRD_RIDERGRP_SA
+							   (STRPRODCD,
+								NPRODVER,
+							    LRULESEQ,
+							    STRRIDERGROUPID,
+							    STRCREATEDBY,
+							    DTCREATED
+							   )
+		VALUES(?,?,?,?,?,Sysdate)
+	</query>
+   </sql>   
+   <!-- Start|CR362|TRM_MBF_362_0043|Ram|Non Annuity type setup added-->
+   <sql Id="InsertPremiumType">
+	<query>INSERT INTO prd_prmtbltyps(strprmtbltyp,strdesc,strtblname,strcreatedby,Ntbltypcd,dtcreated)
+		VALUES(?,?,?,?,?,Sysdate)
+	</query>
+   </sql>
+   <!-- End|CR362|TRM_MBF_362_0043|Ram|Non Annuity type setup added-->
+   <sql Id="InsertPremiumTypeColumns">
+	<query>INSERT INTO prd_prmtbltyp_cols(strprmtbltyp,nbasiscd,nrangevalueapplflg,strcreatedby,dtcreated)
+		VALUES(?,?,?,?,Sysdate)
+	</query>
+   </sql>
+   <sql Id="PremiumTableTypeInsert">
+	<query>INSERT INTO prd_prmtbltyp_hdr(lprmtbltyphdrseq,strprmtbltyp,strtblcd,nbasis,iunit,npmtmode,strcreatedby,
+		dtcreated)VALUES (?,?,?,?,?,?,?,Sysdate)
+	</query>
+	<!--Start Modified By Ramarao on 12/17/2007 -->
+	<!--Start Modified By Pranav on 01/03/2022: added nprmpmtyears,npolterm from and to: FSD_MaxiPro_Campaign_v1.1 -->
+   </sql>
+      <sql Id="InsertMinPrmDetail">
+    <query>
+	  INSERT INTO prd_min_prm(lminprmseq,strprodcd,nprodver,npmtmode,
+	  strcurrcd,dminprmamnt,nisstaffpolicy,strcreatedby,dtcreated,ngender,nprmpmtyearsfrom,nprmpmtyearsto,npoltermfrom,npoltermto)
+	  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    </query>
+  </sql>
+  <!--End Modified By Pranav on 01/03/2022: added nprmpmtyears,npolterm from and to: FSD_MaxiPro_Campaign_v1.1 -->
+<!-- Start:12/29/2007 Changed By Ramarao NISVAREVERYYEAR,DVARRATE columns removed from query  -->
+ <!-- Start:19-Apr-19:Sweta:URF_23819 : Minimum Allocation Rates MAR CR Changes -->
+ <!--Start:25-04-2022 : Pranav :  TRM_MBF_ECNURF_162_P2 : Adding DPERC in Variable Premium Screen -->
+<sql Id="InsertVarSAPrmHdr">
+   <query>
+         INSERT INTO PRD_VSA_PRM_HDR
+         (LVSAPRMHDRSEQ,STRPRODCD,NPRODVER,NSAPRMTYPE,
+         NTBLFORMLFLG,STRTBLFORMLCD,NVARONBASECUR,NVARIND,
+         STRCREATEDBY,DTCREATED,
+         DMAXVARSA,DMINVARSA,NVARPRMFREQ,DPERC)
+         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <!--End:25-04-2022 : Pranav :  TRM_MBF_ECNURF_162_P2 : Adding DPERC in Variable Premium Screen -->
+ <!-- End:19-Apr-19:Sweta:URF_23819 : Minimum Allocation Rates MAR CR Changes -->
+<!-- End:12/29/2007 Changed By Ramarao NISVAREVERYYEAR,DVARRATE columns removed from query  -->  
+ <sql Id="InsertVarSAPrmDtl">
+   <query>
+         INSERT INTO PRD_VSA_PRM_DTL
+         (LVSAPRMDTLSEQ,LVSAPRMHDRSEQ,NTERMFROM,NTERMTO,
+         NENTRYAGEFROM,NENTRYAGETO,NPOLYEARFROM,
+         NPOLYEARTO,DVARRATE,STRCREATEDBY,DTCREATED)
+         VALUES(?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  	<!--End Modified By Ramarao on 12/17/2007 -->
+   <sql Id="InsertLtdPremium">
+    <query>
+	  INSERT INTO prd_lmt_pmt_term(llmtpmtseq, strprodcd, nprodver, ntermfrom, ntermto, nprmterm, nprmpmtyears, strcreatedby, dtcreated) VALUES(?,?,?,?,?,?,?,?,?)
+    </query>
+  </sql>  
+  <sql Id="InsertHealthExtra">
+    <query>
+          INSERT INTO prd_health_extra
+          (lhealthxtraseq,strprodcd,nprodver,nmortratefrom,nmortrateto,
+          dpercxtra,strcreatedby,dtcreated)
+          VALUES(?,?,?,?,?,?,?,?)
+    </query>
+  </sql> 
+  <!--TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-S-->  
+  <sql Id="InsertModalFactor">
+    <query>
+           INSERT INTO prd_modal_factor(lmodalfactorseq,strprodcd,nprodver,
+	   npmtmode,npmtsourcecd,dmodalfactor,dflatcharge,
+           strcreatedby,dtcreated,IBASISUNIT,NFLEXAPPL)
+           VALUES(?,?,?,?,?,?,?,?,?,?,NVL(?,0))
+    </query>
+  </sql>
+  <!--TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-E--> 
+  <sql Id="InsertSAEAge">
+	<query>
+		INSERT INTO prd_minmax_sa
+		(lminmaxsaeageseq,strprodcd,nprodver,neagefrommale,neagetomale,
+		neagefromfemale,neagetofemale,dmaxsa,dminsa,
+		strcreatedby,dtcreated)
+		VALUES(?,?,?,?,?,?,?,?,?,?,Sysdate)
+	</query>
+  </sql>
+  <sql Id="InsertCommHdr">
+	<query>INSERT INTO prd_comm_hdr(lcommhdrseq,strprodcd,nprodver,ncommtype,
+		ncommbase,icommbaseunit,strcreatedby,dtcreated)
+		VALUES(?,?,?,?,?,?,?,Sysdate)
+	</query>
+  </sql>
+  <sql Id="InsertCommDtl">
+	<query>INSERT INTO prd_comm_dtl(lcommdtlseq,lcommhdrseq,nentryagefrom,
+		nentryageto,ntermfrom,ntermto,nnbroflivesfrom,nnbroflivesto,
+		npolyearto,npolyearfrom,dbasevaluefrom,dbasevalueto,dcommrate,
+		strcreatedby,dtcreated)
+		VALUES(prd_commdtl_seq.Nextval,?,?,?,?,?,?,?,?,?,?,?,?,?,Sysdate)
+	</query>
+  </sql>
+  <sql Id="InsertReducedPremium">
+	<query>
+	    INSERT INTO prd_reduced_prm(lreducedprmseq,strprodcd,nprodver,
+	    ntermfrom,ntermto,nagepolyearind,nagepolyear,nflatrateind,drate,
+	    iunit,strcreatedby,dtcreated) 
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
+	</query>
+  </sql>
+  <sql Id="InsertValTblHdr">
+     <query>
+         INSERT INTO prd_val_tbl_hdr(strtblcd,nvaluetype,
+         nvaluebasis,ivalueunit,strcreatedby,dtcreated,NPOLYEARSINFORCE)
+         VALUES(?,?,?,?,?,?,?)
+     </query>
+  </sql>
+   <!--Columns added by garima suggested by dipti 27-12-07 
+   		NMATUPTOAGEFROM
+		NMATUPTOAGETO	
+		NMATUPTOTERMFROM	
+		NMATUPTOTERMTO	
+		NPRMPAYUPTOAGEFROM	
+		NPRMPAYUPTOAGETO	
+		NPRMPAYUPTOTERMFROM	
+		NPRMPAYUPTOTERMTO
+		-->
+<!-- Start:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for medical non medical indicator-->
+<!-- //start:08/01/2010:Sonalb:000|SIT|Reviewed By Sonal|added premium columns as part of Bijak Msia development -->
+ <!-- start 13/12/2011       3575|Day1+1|reviewed by kamlesh|add value basis and unit fields -->
+ <!-- Start:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+ <!-- Start 20-07-2016 | TRM_MBF_URF134246_206 |added Is Smoker column -->
+ <!-- Start:11-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added  NRATESCALEOPTION -->
+  <sql Id="InsertValTblDtl">
+    <query>
+       INSERT INTO prd_val_tbl_dtl(lvaltbldtlseq,strtblcd,ntermfrom,ntermto,
+       nentryagefrom,nentryageto,npolyearfrom,npolyearto,
+       dvaluerate,ngendercd,dtefffrom,dteffto,
+        NMATUPTOAGEFROM,
+		NMATUPTOAGETO,	
+		NMATUPTOTERMFROM,	
+		NMATUPTOTERMTO,	
+		NPRMPAYUPTOAGEFROM,	
+		NPRMPAYUPTOAGETO,	
+		NPRMPAYUPTOTERMFROM,
+		NPRMPAYUPTOTERMTO,
+		strcreatedby,dtcreated,NMEDNONMEDIND,NPRMFROM, NPRMTO,NVALUEBASIS,IVALUEUNIT,DSAFROM,DSATO,NISSMOKER
+		,NRATESCALEOPTION)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)	
+    </query>
+ </sql>
+ <!-- End:11-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added  NRATESCALEOPTION -->
+ <!-- End 20-07-2016 | TRM_MBF_URF134246_206 |added Is Smoker column -->
+ <!-- End:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+<!-- End:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for medical non medical indicator-->
+<!-- //end:08/01/2010:Sonalb:000|SIT|-->
+ <sql Id="InsertPrdDiscountHdr">
+    <query>
+       INSERT INTO prd_discount_hdr(ldiscmapseq,strprodcd,nprodver,ndisctype,
+        nprio,ndiscappliedon,ngenderappl,nstdsubsappl,nbasis,dmaxdiscrate,
+        imaxdiscrateunit,strcreatedby,STRDISCDESC,dtcreated, strdisctype)
+	VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,Sysdate,'LS')
+    </query>
+ </sql>
+ <!-- Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to --> 
+ <sql Id="InsertPrdDiscountDtl">
+    <query>
+       INSERT INTO prd_discount_dtl(ldiscdtlseq,ldiscmapseq,ntermfrom,ntermto,
+ 		dcriteriarngfrom,dcriteriarngto,drate,dmindisc,dmaxdisc,strcreatedby,NPOLYRINFORCEFM,NPOLYRINFORCETO,
+		DBASISFRM,DBASISTO ,NDISCBASIS,NUNIT,NAGEFRM,NAGETO,NGENDER,DTBASISFRM,DTBASISTO,NPRMPAYTERMFROM,NPRMPAYTERMTO,dtcreated)
+        VALUES(prd_discdtl_seq.Nextval,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,Sysdate)
+    </query>
+ </sql>
+ <!-- End|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to -->
+ <!-- Start:08/May/2008:MaybanPH1:Mandar Joshi:TRM_MBF_CLMIL_00003:Added code to capture NAV date option -->
+ <!-- Start:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for recover periodic payment-->
+ <!-- //start:02/06/2010:sonalb:1656|UAT|Reviewed by Sonal|added pmt factpr n mode for periodic pmt -->
+<!-- Start:24Feb2015:Prod10772|To identity how many times Funeral expense to be paid. -->
+ <sql Id="InsertProductEvent">
+   <query>
+    INSERT INTO prd_event_map(leventmapseq,strprodcd,nprodver,neventtype,
+    nclienttype,nlifeseq,ndoespoltermn,ndoesprodtermn,ndoesprmcease,njointlifeapplicability,nnavdtoption,dtcreated,
+    strcreatedby,nRecoverPrdPmt,DFACTOR,NFREQUENCY,NISFUPERLIFE	)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+<!-- End:24Feb2015:Prod10772|To identity how many times Funeral expense to be paid. -->
+  <!-- //End:02/06/2010:sonalb:1656|UAT|Reviewed by Sonal|added pmt factpr n mode for periodic pmt -->
+  <!-- End:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for recover periodic payment-->
+  <!-- End:08/May/2008:MaybanPH1:Mandar Joshi:TRM_MBF_CLMIL_00003:Added code to capture NAV date option -->
+  <!-- //Start:28/04/2009:chandrashekharb:TRM_MBF_CLMCR_00041:Done changes for CR-69, Policy cancellation due to non disclosure -->
+  <!--15/Oct/2009:Mandar Joshi:TRM_MBF_ANN_00014:Added column for Annuity Phase -->
+  <!-- Start:14-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added GAINDICATOR -->
+ <sql Id="InsertEventBenefitDetail">
+   <query>
+      INSERT INTO prd_event_ben_map(leventbenseq,leventmapseq,nbentype,
+      nbenbasis,ibenunits,dbenrate,strschednbr,nmaxinstt,nbenpmtfreq,
+      nbenapplupto,nbenuptoyears,nisintappl,ninttype,dintrate,nissubs,
+      nafflnbenschedappl,strafflnschednbr,
+      dtcreated,strcreatedby,STRPRMTBLTYP,NISCUSTOM,dflatamnt,nGrndOfEvent,nAnnPhase,NAPPLICABLEON
+      ,GAINDICATOR)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <!-- End:14-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added GAINDICATOR -->
+    <!-- //End:28/04/2009:chandrashekharb:TRM_MBF_CLMCR_00041:Done changes for CR-69, Policy cancellation due to non disclosure -->
+  <sql Id="InsertBenTpdb">
+   <query>
+      INSERT INTO prd_ben_tpdb(lbentpdbseq,leventbenseq,ntermfrom,ntermto,
+        neventagefrom,neventageto,dbasevaluefrom,dbasevalueto,dbenrate,
+        dtcreated,strcreatedby)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+<!--Start|20/10/2013|8342 |Adding gender column in benifit definition screen -->
+<!--Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and Rate scale option columns  -->
+<!--Start|13/03/2023|TRM_MBF_ECNURF_355_344_P2|Rohit|Added NEXPIRYAGE column  -->
+  <sql Id="InsertBenAgeYearTerm">
+   <query>
+      INSERT INTO prd_ben_ageyrterm(lageyrtermseq,leventbenseq,ntermfrom,
+        ntermto,neventagefrom,neventageto,npolyearfrom,npolyearto,dbenrate,
+        dtcreated,strcreatedby,ngendercd,NPRMPAYTERMFROM,NPRMPAYTERMTO,NRATESCALEOPTION,NEXPIRYAGE))
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+ <!--End|13/03/2023|TRM_MBF_ECNURF_355_344_P2|Rohit|Added NEXPIRYAGE column  -->
+  <!--End|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and Rate scale option columns  -->
+<!--End|20/10/2013|8342 |Adding gender column in benifit definition screen -->
+
+  <!-- Start :mayban Ph1:Garima:Removed fields dtefffrom and dteffto -->
+  <sql Id="InsertAfflnBenSchedHdr">
+   <query>
+      INSERT INTO prd_affln_ben_hdr(strafflnschednbr,nbenbasis,
+      nismutexclv,dtcreated,strcreatedby,dmaxpayperc)
+      VALUES(?,?,?,?,?,?)
+   </query>
+  </sql>
+   <!--Start:Myaban Ph1:garima:Added  Fields ,DMAXPERIOD,DMAXPERIODUNIT,DTEFFFROM,DTEFFTO -->
+
+<!-- Start:23/09/10/2009:TRM_MBF_CR196_00001:pritirs:changes for wop -->  
+<!-- Start:13-AUG-2014:CR411_P2:TRM_MBF_CR411_0106:BrijeshP:Added fields for Commencement within duration and Product Term -->
+<!-- Start|20/04/2021|TRM_MBF_URF27389_311_P2|Protect 88 PH2 -->
+<sql Id="InserAfflnBenSchedDtl">
+   <query>
+       INSERT INTO prd_affln_ben_dtl(lafflnbendtlseq,strafflnschednbr,
+      nafflntype,nisnonexclv,nflatrateflg,drate,iunit,nafflnfreq,nmaxinstt,
+      NCLMPOLTERMN,NCLMPRODTERMN,NCLMPRMCEASES,strschednbr,dtcreated,strcreatedby,
+	  DMAXBEN, NMAXELIGIBLEAGE, NSURVPERIOD, NCLAIMALLOWED, STRGRPCD, STRAFFLNGROUP, 
+	  NINDMNTYPE,NSTDPLAN,DFLATAMNT,NBENBASIS,NBENTIMES,NREDOTHERBEN,NANNLIMIT,NPOLLIFELIMIT,
+	  NANNDEDLIMIT,NDEDLIMITPERDIS,NWAITINGPRD,DCORIPERC,DCOPAYPERC
+	  ,DMAXPERIOD,DMAXPERIODUNIT,DTEFFFROM,DTEFFTO,NISWOPAPPL,DCOMMDURATION,DCOMMDURATIONUNIT,NPRODTERMN,NDURATIONFROM,NDURATIONTO)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+<!-- End|20/04/2021|TRM_MBF_URF27389_311_P2|Protect 88 PH2 -->
+<!-- End:13-AUG-2014:CR411_P2:TRM_MBF_CR411_0106:BrijeshP:Added fields for Commencement within duration and Product Term -->
+<!-- End:23/09/10/2009:TRM_MBF_CR196_00001:pritirs -->
+   <!--End:Myaban Ph1:garima:Added  Fields ,DMAXPERIOD,DMAXPERIODUNIT,DTEFFFROM,DTEFFTO -->
+<!-- Start :RajeshP : 10-Apr-2012 : CR_306 : Changes for Periodic payments -->  
+ <!-- <sql Id="InsertSchedDtl">
+   <query>
+      INSERT INTO prd_sched_dtl(lscheddtlseq,strschednbr,npmtdoneafterdt,ninsttnbr,
+      ntermfrom,ntermto,nperd,nperdunit,drate,dtcreated,strcreatedby)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>-->
+  
+  <sql Id="InsertSchedDtl">
+   <query>
+      INSERT INTO prd_sched_dtl(lscheddtlseq,strschednbr,npmtdoneafterdt,ninsttnbr,
+      ntermfrom,ntermto,nperd,nperdunit,drate,dtcreated,strcreatedby,npmtmode,ndays)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+<!-- End :RajeshP : 10-Apr-2012 : CR_306 : Changes for Periodic payments -->  
+
+  <!--Start:02/01/2008:anilg :added NSCHTYPE,NSCHFREQ for  Id="SelectSchedHdr" -->
+   <!--09-07-2018 | Pawan Annuity Start here --> 
+  <!--Start:04-07-2023||Rohit#22||TRM_MBF_URF24268_FIN_LTB_PROV_349||Added strIsLTB -->
+  <sql Id="InsertSchedHdr">
+   <query>
+      INSERT INTO prd_sched_hdr(strschednbr,dtcreated,strcreatedby,NSCHTYPE,NSCHFREQ,NPERD,NPERDUNIT,NISLTB)
+      VALUES(?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <!--End:04-07-2023||Rohit#22||TRM_MBF_URF24268_FIN_LTB_PROV_349||Added strIsLTB -->
+   <!--09-07-2018 | Pawan Annuity End here --> 
+  <!-- start:26/03/2009:sonalb:TRM_MBF_ILSW_00001 : renamed columns -->
+    <!-- start:21/04/2009:sonalb:TRM_MBF_ILSW_00001 : added col NMINSWITCHBALTYPE -->
+    <!--START:18-05-2009:TRM_MBF_ILSR_00024:avinashss:Query modified to get Percentage   -->
+    <!--  // start:23/JUN/2010:sonalb:1959|UAT|Reviewed By Heena|Added GMMV Ratio  -->
+   <!-- Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+   	 <!--Start:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added NISNLGAPPL,NYEARSOFNLG Elite Investment product-->
+   	 <!--Start 19/06/2015 : Pawan : URF 12862 :Top Up Feature Enhancement-->
+	 <!--TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-S-->
+  <sql Id="InsertInvestmentLink">
+     <query>
+        INSERT INTO prd_invest_link_m (strprodcd,nprodver,nallowpartwithd,nallowswitch,
+	nallowtopup,nallowchangesaprm,nissaimpactwithd,dminwithdamntallow,dminbalafterwithd,
+	nissaimpacttopup,dmintopupamnt,nnbroffreeswitch,nswitchyearlife,nswitchyearunit,
+	dminfundsizeswitch,dminswitchamnt,ntypeofchange,nisoptional,naffectssaprm,
+	dtcreated,strcreatedby,DWITHDRATE	,
+NWITHDBASIS	,
+NWITHDCRITERIA	,dtopuprate,ntopupbasis,
+	ntopupcriteria,ninternalfundrider,strcoitblcd,strinvesthdrtblcd,
+        nAllocAfterDays,nprmmultiple,dmaxpremium,ncoicalctype,strcoiformulacd,ngmmv,
+        ngmsv,nloyaltybonusapplc,NMINSWITCHBALTYPE ,NMINSWITCHAMTTYPE,DGMMVPERC, DRATIOGMMV,NDISTRIBUTEMTHD,NSHROTFALLOPT,NISNLGAPPL,NYEARSOFNLG,NISNOTIONAL,NTYPETOPUP,NTOPUPPRMMULTOF,NAUTOTOPUPAPPLC)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,Sysdate,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) 
+      </query>
+   </sql>
+   <!--TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-E-->
+   <!--End 19/06/2015 : Pawan : URF 12862 :Top Up Feature Enhancement-->
+<!--End:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added NISNLGAPPL,NYEARSOFNLG for Elite Investment product-->
+<!-- End:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+    <!--END:18-05-2009:TRM_MBF_ILSR_00024:avinashss-->
+     <!-- start:26/03/2009:sonalb:TRM_MBF_ILSW_00001 : renamed columns -->
+      <!-- end:21/04/2009:sonalb:TRM_MBF_ILSW_00001 : -->
+      <!-- Start: 23-May-2017 : Swati : TRM_MBF_URF137915_220 :  Mega ILP Phase 1 Sprint 1 -->
+  <sql Id="CreateAllocRate">
+     <query>
+         INSERT INTO prd_alloc_rates(lallocrateseq,strprodcd,nprodver
+         ,nprmtermfrom, nprmtermto,
+         ntermfrom,ntermto,NPOLYRFROM,npolyrto,nisstaff,dallocrate,strgrpschemecd,dtcreated,strcreatedby) 
+         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      </query>
+   </sql>
+   <!-- End: 23-May-2017 : Swati : TRM_MBF_URF137915_220 :  Mega ILP Phase 1 Sprint 1 -->
+  <sql Id="InsertFundMap">
+     <query>
+        INSERT INTO prd_prod_fund_map(lprodfundmapseq,strprodcd,nprodver,
+        strfundcd,dminallocperc,dminincrementperc,dtcreated,strcreatedby,NFUNDCATG)
+        VALUES(?,?,?,?,?,?,?,?,?)
+      </query>
+   </sql>
+      <!-- Start:31/10/2007:MaybanPH1:anshult:<TaskID>:PRD_AllocationRules -->
+       <!-- Start:20/12/2007:MaybanPH1:anilg:<TaskID>:added  NPRMPMTTYPE for Id="InsertRulesAllocation"-->
+       <!-- Start:29/12/2007:MaybanPH1:anilg:<TaskID>:added  NADVPRMAPPLD for Id="InsertRulesAllocation"-->
+       <!-- START:16-5-2009:TRM_MBF_ILSR_00005:avinashss:Query Modified as per new table structure -->
+   <!-- Start:14-Aug-2019:Sustainability Changes:added NISSUSTPRMAPPLC column -->	      
+   <sql Id="InsertRulesAllocation">
+     <query>
+        INSERT INTO prd_invest_alloc(LPRODALLOCATIONRULESSEQ,strprodcd,nprodver,nriskchgfreq,
+        dtcreated,strcreatedby,NPRMPMTTYPE,NADVPRMAPPLD,NCHGDEDNMETHD,
+        NPRMHOLIDAYAPPLD,NXPRMMETHOD,NBIDOFFERCHGAPPLC,NADMNCHGAPPLC,NADMINCHGFREQ,NADMINCHGDEDMTHD,
+        NINITCHGAPPL,NINITCHGFREQ,NINITCHGDEDMTHD)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      </query>
+   </sql>
+    <!-- End:14-Aug-2019:Sustainability Changes:added NISSUSTPRMAPPLC column -->	
+   <!--END:16-5-2009:TRM_MBF_ILSR_00005:avinashss -->
+   <!--End :18/09/2007:MaybanPH1:anshult -->
+   
+   <!-- START:16-5-2009:TRM_MBF_ILSR_00005:avinashss:Query Added as per new table structure -->
+   
+   <sql Id="InsertRulesDtlsAllocation">
+     <query>
+        INSERT INTO prd_invest_alloc_dtl(LPRDALLOCCOMPSEQ,LPRODALLOCATIONRULESSEQ,
+        NCOMPONENT,NOPERATOR,dtcreated,strcreatedby)
+        VALUES(?,?,?,?,?,?)
+      </query>
+   </sql>
+   <!--END:16-5-2009:TRM_MBF_ILSR_00005:avinashss --> 
+    
+  <sql Id="InsertHealthCare">
+     <query>
+        INSERT INTO prd_healthcare_m(nindvlfamilyflg,nchilduptoage,
+        nmaxstudychildage,dtcreated,strcreatedby,strprodcd,nprodver)
+        VALUES(?,?,?,?,?,?,?)      
+     </query>
+   </sql>
+  <sql Id="InsertSinglePremium">
+     <query>
+           INSERT INTO prd_term_sp_instt(ltermspinsttseq,strprodcd,nprodver,
+	   ntermfrom,ntermto, nmaxinstt, imaxperdalow, nmaxperdunit, dmodalfactor, dtcreated,
+           strcreatedby)
+           VALUES(?,?,?,?,?,?,?,?,?,?,?)
+     </query>
+   </sql>
+   <!-- Start Modified By Ramarao on 12/17/2007 -->
+    <!-- Start:27/11/2009:Internal:pritirs:Captured formula version -->
+	<!--Start:CR-365B|Tracebility No.:TRM_MBF_CR365B_0070|ravis|25-07-2013|added for CR-365B LNPRMTBLTYPHDRSEQ -->
+	<!--Start : RajeshP : CR_395 : Code Changes done to include new Norional Extra Premium Dropdown.  -->
+   <!-- Start |11-09-2015 |TRM_MBF_URF129419_174 | added new feilds DTEFFFROM,DTEFFTO,NNBEFFECTON,NRENEFFECTON -->
+   <!--Start:17/6/2017:Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1| added new feilds ntblNformlflg, strNformlcd, NNFORMULAVER For notoinal premium setup-->
+   <!-- Start TRM_MBF_URF19496_225 -->
+   <!-- Start TRM_MBFURF_CLTA_CLTT_23816_265_Enhenecment -->
+	<sql Id="InsertProductPrmMap">
+     <query>
+        INSERT INTO prd_prmtbltyp_defn(lprmtbltypdefnseq,strprodcd,
+	nprodver,ntblformlflg,strformlcd,lprmtbltyphdrseq,nfemalesetbackage,nmalesetbackage,
+			stroetype,dtcreated,strcreatedby,npremroundbasis,STREXTRAPRMTBLCD,NJNTLFEFCTTBLCD,NFORMULAVER,nRSATblFormlFlg,STRRSATBLCD,LNPRMTBLTYPHDRSEQ,STRNEXTRAPRMTBLCD
+			,DTEFFFROM,DTEFFTO,nntblformlflg,strNformlcd,NNFORMULAVER,STRCOITBLCD,NAUTOOCCEXTRA)
+			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+	</query>
+   </sql>
+   <!-- End TRM_MBFURF_CLTA_CLTT_23816_265_Enhenecment -->
+   <!-- End TRM_MBF_URF19496_225 -->
+	<!-- End |11-09-2015 |TRM_MBF_URF129419_174 | added new feilds DTEFFFROM,DTEFFTO,NNBEFFECTON,NRENEFFECTON -->
+	<!--End: RajeshP : CR_395 : Code Changes done to include new Norional Extra Premium Dropdown.  -->
+	<!--End:CR-365B|Tracebility No.:TRM_MBF_CR365B_0070|ravis|25-07-2013|added for CR-365B LNPRMTBLTYPHDRSEQ -->
+   <!-- End:27/11/2009:Internal:pritirs -->
+   <!-- End Modified By Ramarao on 12/17/2007 -->
+   <sql Id="PrdStatusCreate">
+     <query>
+           INSERT INTO prd_authorization(strprodcd,nprodver,nfunctionality,nstatcd, 
+	                                dtcreated, strcreatedby)
+           VALUES(?,?,?,?,Sysdate,?)
+     </query>
+   </sql>
+   <!--Start:12/10/2007:MaybanPH1:anilg:<TaskID>:Added DMINVALUE,DMAXVALUE
+                                                 for storing min max value  for Id="InsertRiderRule"-->
+   <sql Id="InsertRiderRule">
+     <query>
+           INSERT INTO prd_rules(lruleseq,nriderbasis,noperator1,dvalue,noperator2,
+	                         nplanbasis, dtcreated, strcreatedby, DMINVALUE ,DMAXVALUE)
+           VALUES(?,?,?,?,?,?,?,?,?,?)
+     </query>
+   </sql>
+   <sql Id="OccupationExtraHdrInsert">
+     <query>
+          INSERT INTO prd_occup_xtra_m(stroetype,noeind,strdesc,dtcreated,strcreatedby)
+          VALUES(?,?,?,?,?)
+     </query>
+   </sql>
+   <sql Id="OccupationExtraDtlInsert">
+     <query>
+         INSERT INTO prd_occup_xtra_dtl(stroetype,stroccupclasscd,nflatrateind,
+          nprmbasis,iprmunit,dprmrate,dtcreated,strcreatedby)
+        VALUES(?,?,?,?,?,?,?,?)
+     </query>
+   </sql>
+   
+   <!-- Start:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+   <sql Id="InsertPaidUpDtl">
+     <query>
+         INSERT INTO prd_val_paidup_dtl(lvalpvseq,strtblcd,nmatagefrom,nmatageto,nattagefrom,
+         nattageto,dratefactor,dintrate,dtefffrom,dteffto,dtcreated,strcreatedby,NPOLYEARFROM,NPOLYEARTO,NTERMFROM,NTERMTO,NGENDERCD,DSAFROM,DSATO)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     </query>
+   </sql>
+   <!-- End:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+   
+   <!--Start:23/11/2007:MaybanPH1:rekham:<TaskID>:PRD_BonusConfiguration  -->
+   <!-- start:08/04/2009:TRM_MBF_POLBEN_00002:sonalb:added NBONRATEDECLRNTYPE,DTCOMCFROM, DTCOMCTO-->
+<!--  Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+   <sql Id="ProductBonusHdrInsert">
+     <query>
+         INSERT INTO prd_bon_hdr( 
+		 lbonhdrseq,
+		 cbontype,
+		 nfiscalyear,
+		 dtefffrom,
+		 dteffto,
+		 strprodcd,
+		 nprodver,
+         nrisktype,
+		 nbonbas,
+		 nbonunit,
+		 dtcreated,
+		 strcreatedby,
+		 NBONRATEDECLRNTYPE,
+		 DTCOMCFROM,
+		 DTCOMCTO
+		 )
+        VALUES(?,?,?,?,?,?,?,?,?,?,SYSDATE,?,?,?,?)
+     </query>
+   </sql>
+	<!--  End:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+   <!--End:23/11/2007:MaybanPH1 -->
+   <!-- end:08/04/2009:TRM_MBF_POLBEN_00002:sonalb-->
+   <!--Start:23/11/2007:MaybanPH1:rekham:<TaskID>:PRD_BonusConfiguration  -->
+	<!--  Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+	<!-- Start : 11/02/2021 : URF29281_ElxirRPMig : Elixir Migration- Phase4:Traditional Regular Premium Products -->
+   <sql Id="ProductBonusDtlInsert">
+     <query>
+         INSERT INTO prd_bon_dtl(
+		 lbondtlseq,
+		 lbonhdrseq,
+		 ntermfrom,
+		 ntermto,
+		 npolyearfrom,
+		 npolyearto,
+		 nentryagefrom,
+		 nentryageto,
+         dactualbonrate,
+         DSUPERCOMPRATE,
+		 dtcreated,
+		 strcreatedby,
+		 NCALCDATE, 
+                 DTCALC)
+        VALUES(?,?,?,?,?,?,?,?,?,?,SYSDATE,?,?,?)
+     </query>
+   </sql>
+   <!-- End : 11/02/2021 : URF29281_ElxirRPMig : Elixir Migration- Phase4:Traditional Regular Premium Products -->
+	<!--End:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout --> 
+   <!-- End:23/11/2007:MaybanPH1 -->
+  <sql Id="InsertCoiHdr">
+   <query>
+     INSERT INTO prd_coi_hdr(strcoitblcd,strcoitbldesc,iunit,dtcreated,strcreatedby)
+     VALUES(?,?,?,?,?)
+   </query>
+  </sql>
+  <!-- Start TRM_MBF_URF19496_225 -->
+  <!-- Start TRM_MBF_URF20283_230 : MegaILP Agency -->
+  <sql Id="InsertCoiDtl">
+   <query>
+     INSERT INTO prd_coi_dtl(lcoitbldtlseq,strcoitblcd,nage,
+      ngendercd,nissmoker,ncoveragetype,dmonthlyrate,dtcreated,
+      strcreatedby,NCALBASIS,NPMTMODE,STROCCUPCLASS,NMEDDEDOPT,NMEDDEDLIMIT
+      ,NPOLYEARFROM, NPOLYEARTO, NISGIOIND)
+     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <!-- End TRM_MBF_URF20283_230 : MegaILP Agency -->
+  <!-- End TRM_MBF_URF19496_225 -->
+<!--Start:16/06/2009:TRM_MBF_ANN_00001:pritirs:Uncommented annuity code-->	
+<!--  Start:24/09/2009:TRM_MBF_ANN_00002 :viniths:Added  NISSAANNSAME in sql Id="InsertAnnuityDefn"  -->
+<!--28-06-2018 | Pawan Annuity Start here --> 
+  <sql Id="InsertAnnuityDefn">
+   <query>
+    INSERT INTO prd_annuity(lannseq,strprodcd,nprodver,naccumanntype,nannzanntype
+     ,nimmdordeferred,ndefnbencontr,nannvesting,niscashoptalow,dmaxcashoptperc,naccumon
+     ,nvarannopt,nisuwappl,dtcreated,strcreatedby, NISSAANNSAME,NACCUMFUNDTYPE,
+       NISACCUMSHFAPPL,NACCUMSHFFUNDTYPE,NISANNZSHFAPPL,
+       NANNZSHFFUNDTYPE, NLIFETIMEAGELIMIT)
+     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <!--28-06-2018 | Pawan Annuity End here --> 
+  <!--  End:24/09/2009:TRM_MBF_ANN_00002 :viniths:Added  NISSAANNSAME in sql Id="InsertAnnuityDefn"  -->
+<!--End:16/06/2009:TRM_MBF_ANN_00001:pritirs-->	
+  <sql Id="InsertAnnuityJntPmt">
+   <query>
+     INSERT INTO prd_ann_jnt_pmt(lannseq,njntlifepmttill,dtcreated,strcreatedby)
+     VALUES(?,?,?,?)
+   </query>
+  </sql>
+  <!--28-06-2018 | Pawan Annuity Start here-->	
+  <sql Id="InsertAnnuityVestAge">
+   <query>
+     INSERT INTO prd_ann_vesting(lannseq,nvestingage,dtcreated,strcreatedby,nannzphase,strannzfundtype)
+     VALUES(?,?,?,?,?,?)
+   </query>
+  </sql>
+ <!--28-06-2018 | Pawan Annuity End here-->
+  <sql Id="InsertAnnuityAccumRate">
+   <query>
+     INSERT INTO prd_ann_accum_rate(lannseq,ninforceyearfrom,ninforceyearto
+     ,drate,iunit,dtcreated,strcreatedby)
+     VALUES(?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <sql Id="InsertAnnuityPmtMode">
+   <query>
+     INSERT INTO prd_ann_pmt_mode(lannseq,npmtmode,dmodalfactor,dminannamnt,dmaxannamnt,nbasis,iunit
+     ,dtcreated,strcreatedby)
+     VALUES(?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+<sql Id="InsertInvLinkChgHdr">
+   <query>
+     INSERT INTO prd_invest_chg_hdr
+			(
+			strinvesthdrtblcd, 
+			strinvesttbldesc, 
+			DADDSURRCHG, 
+			dtcreated,
+			strcreatedby
+			)
+     VALUES(?,?,?,
+			?,?)
+   </query>
+  </sql>
+  <!-- Start : 29/06/2018 : TRM_URF_21454_56_57_241 : KetanM : Column Added [NPRMTERMTO & NPRMTERMTO] For Premium Payment Term Changes -->
+  <sql Id="InsertInvLinkChgDtl">
+   <query>
+     INSERT INTO prd_invest_chg_dtl
+			(
+			linvschgdtlseq, 
+			strinvesthdrtblcd,
+			nchgtype,
+			npolyearfrom, 
+			npolyearto, 
+			drate, 
+			ibasisunit, 
+			dflatamnt, 
+			nhighlowind, 
+			
+			NPMTMODE, 
+			
+			dminchgamnt, 
+			dmaxchgamnt, 
+			dbasisrngfrom, 
+			dbasisrngto,
+			dtcreated,
+			strcreatedby,
+			nchgbasis,
+			NPRMTERMFROM,
+			NPRMTERMTO
+			)
+     VALUES(?,?,?,?,?,
+			?,?,?,?,?,
+			?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <!-- End : 29/06/2018 : TRM_URF_21454_56_57_241 : KetanM : Column Added [NPRMTERMTO & NPRMTERMTO] For Premium Payment Term Changes-->
+  <sql Id="InsertAnnznOptDtl">
+   <query>
+        INSERT INTO prd_ann_opt_dtl(lannoptalowseq,nperd,dtcreated
+        ,strcreatedby)
+        VALUES(?,?,?,?)
+   </query>
+  </sql>
+  <sql Id="InsertAnnznOptHdr">
+   <query>
+        INSERT INTO prd_ann_opt_alow(lannoptalowseq,lannseq,nannzoptalow,
+        ddefncontrperc,nnbrofannpmtben,niscertainperd,dtcreated,strcreatedby)
+        VALUES(?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <sql Id="InsertAnnRateMap">
+   <query>
+       INSERT INTO prd_ann_tbl_type(lanntbltypseq,lannseq,nyearfrom,nyearto
+                   ,lprmtbltyphdrseq,dtcreated,strcreatedby,dtverified,strverifiedby
+                   ,dtauth,strauthby)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <sql Id="InsertBenAnnPmt">
+   <query>
+      INSERT INTO prd_ann_ben_pmt(lbenannpmtseq,leventbenseq,nphaseflg,
+        nannznopt,njointlifeopt,ndeathof,nannpaystatus,npaymentceases,
+        dbenrate,dtcreated,strcreatedby)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <sql Id="InsertPrdLnTrtmt">
+   <query>
+      INSERT INTO prd_prdln_trtmt_m(lprdlntrtmtseq,strprodline,dlimitamntfrom,
+        dlimitamntto,ntreatment,npriority,strcreatedby,dtcreated)
+      VALUES(?,?,?,?,?,?,?,?)
+   </query>
+  </sql>
+  <!-- Added by Rekha for commontool -->
+  <sql Id="ProdInsertSQL">
+   <query>
+      INSERT INTO PRODTEST(strProdName,strProsCd,testseq)
+      VALUES(?,?,?)
+   </query>
+  </sql>
+  <!-- End -->
+  <!--  Start:02/11/2007:MaybanPH1:rekham:<TaskID>:PRD_RestrictedOccupation --> 
+   <sql Id="RestrictedOccCreate">
+   <query>
+   INSERT INTO prd_occ_rest(strprodcd,nprodver,stroccupcd,strcreatedby,dtcreated)
+   VALUES(?,?,?,?,?)
+   </query>
+   </sql>
+      <!--  End:02/11/2007:MaybanPH1:rekham-->
+      <!--  Start:05/11/2007:MaybanPH1:rekham:<TaskID>:PRD_WaiverOFPremium --> 
+      <!-- Start:29/06/2009:CR 23:shweta:Added a new column for WOP Treatment Type -->
+   <sql Id="RidersWaivedInsert">
+	<query>INSERT INTO prd_waiver_benefit(strprodcd,nprodver,strriderprodcd,nriderprodver,strcreatedby,dtcreated,nTreatmntType)
+		VALUES(?,?,?,?,?,Sysdate,?)
+	</query>
+   </sql>
+   <!-- End:29/06/2009:CR 23:shweta:Added a new column for WOP Treatment Type -->
+    <!--  End:05/11/2007:MaybanPH1:rekham-->
+    <!-- Sonal -->
+    <sql Id="InsertThirdPartyRelation">
+	<query>INSERT INTO PRD_THIRDPARTY_RELATIONS(LTHIRDPARTYSEQ,strprodcd,nprodver,NRELNCD,strcreatedby,dtcreated)
+		VALUES(?,?,?,?,?,Sysdate)
+	</query>
+   </sql>
+   <!--  Start:17/12/2007:MaybanPH1:sumedhd:<TaskID>:PRD_BaloonPercentageDetails --> 
+	<sql Id="InsertBaloonPercDtls">
+	<query>INSERT INTO PRD_RTA_BALOON_PERC(LRTABALOONSEQ,STRPRODCD,NPRODVER,DPERC,STRCREATEDBY,DTCREATED)
+		VALUES(?,?,?,?,?,Sysdate)
+	</query>
+   </sql>	
+	<!--  End:17/12/2007:MaybanPH1:sumedhd-->
+	<!--Start:7/05/2011:vigneshA-->
+	<sql Id="InsertWopOccFormRiderDtls">
+	 <query>
+	 	INSERT INTO PRD_WOP_OCC_RID(LWOPOCCRIDSEQ,NWOPFORMCD,STRPRODCD,NPRODVER,STRRIDERPRODCD,NRIDERPRODVER,STRCREATEDBY,DTCREATED)
+	 	VALUES(?,?,?,?,?,?,?,Sysdate)
+	 </query> 
+	</sql>
+	<!--End:7/05/2011:vigneshA-->
+
+    <!--Start:04/05/2023||Rohit#10||TRM_MBF_ECNURF_1379_345_P1||insert for product unit rule for epf phase-2-->
+    <sql Id="InsertProdUnitRuleDtls">
+        <query>INSERT INTO PRD_UNIT_RULE(LUNITRULESEQ,STRPRODCD,NPRODVER,NRELNWITHFIRSTLA,DOPERATOR,DBASIS,DRATE,DTCREATED,STRCREATEDBY)
+            VALUES(?,?,?,?,?,?,?,?,?)
+        </query>
+    </sql>
+    <!--End:04/05/2023||Rohit#10||TRM_MBF_ECNURF_1379_345_P1||insert for product unit rule for epf phase-2-->
+	
+	<!--  Start:19/12/2007:MaybanPH1:sumedhd:<TaskID>:PRD_BaloonPercentageDetails --> 
+	<sql Id="InsertUnearnedPrmDtls">
+	<query>INSERT INTO PRD_UNEARNED_PRM_DTL(LUNEARNEDSEQ,STRPRODCD,NPRODVER,NDAYSFROM,NDAYSTO,NPMTMODE,DBASISUNIT,DPERC,DYEARPERC,DHALFYEARPERC,DQUAPERC,DMONTHPERC)
+		VALUES(?,?,?,?,?,?,?,?,0,0,0,0)
+	</query>
+   </sql>	
+	<!--  End:19/12/2007:MaybanPH1:sumedhd-->
+	ComPolVarSA
+	<!-- Start 28-12-07 Mayban:garima Var SA Schedule  -->
+	<!--  //start:24-Feb-2010:sonalb:49|UAT|store prod cd and ver in com_pol_var_sa -->
+	<sql Id="ComPolVarSA">
+	<query>INSERT INTO 
+			COM_POL_VAR_SA(
+						LPOLVARSASEQ,	
+						STRPOLNBR,	
+						NPOLYEARINFORCE	,
+						DSA,	
+						DTCREATED,	
+						STRCREATEDBY,
+						STRPRODCD,
+						NPRODVER
+				)
+			VALUES(COM_POL_VAR_SA_SEQ.nextval,?,?,?,Sysdate,?,?,?)
+	</query>
+   </sql>	
+   <!-- Start 28-12-07 Mayban:garima Var SA Schedule  -->
+   <!--  //End:24-Feb-2010:sonalb:49|UAT|store prod cd and ver in com_pol_var_sa -->
+		<!--Start:17/12/2007:MaybanPH1:deenaa: PRD_ExtraMortalityDefinition -->
+    <sql Id="InsertExtraMortalityDefnHdr">
+		<query>
+			insert into PRD_EXTRPRM_HDR (LEXPRMHDRSEQNBR,STREXTRAPRMTBLCD,DBASIS,NUNIT,DTCREATED,STRCREATEDBY)
+			values(?,?,?,?,?,?)
+		</query>
+   </sql>	
+   <!-- //start:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+   <!-- vaibhav#777 Start added NPRMTERMFROM and NPRMTERMTO -->   
+	<sql Id="InsertExtraMortalityDefnDtl">
+		<query>
+			insert into PRD_EXTRPRM_DTL
+			 (LEXPRMHDRSEQNBR, LEXPRMDTLSEQNBR, NAGEFROM, NAGETO, NTERMFROM, NTERMTO,
+			 NEMRATE, DRATE, DTCREATED, STRCREATEDBY, NGENDER, NPAYMENTMODE , NISSMOKER,NNOOFSTICKS,STROCCUPCLASS, NPRMTERMFROM, NPRMTERMTO )
+			values
+			  (?, PRD_EXTRPRM_DTL_SEQ.NEXTVAL,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,? )
+		</query>
+	</sql>	
+   <!-- vaibhav#777 END  -->	
+	<!-- //End:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+<!-- Start: UAT_2387:reviewed by janga:Screen require for RSA Factor Table Setup -->	
+	<sql Id="InsertRSAFactorHdr">
+		<query>
+			insert into PRD_RSA_TBL_HDR (LRSAHDRSEQNBR,STRRSATBLCD,NBASIS,NUNIT,DTCREATED,STRCREATEDBY)
+			values(?,?,?,?,?,?)
+		</query>
+   </sql>	
+   <!-- //start:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+	<sql Id="InsertRSAFactorDtl">
+		<query>
+			insert into PRD_RSA_TBL_Dtl
+			 (LRSAHDRSEQNBR, LRSADTLSEQNBR,NPOLYEARFROM, NPOLYEARTO, NTERMFROM, NTERMTO,
+			 NDEFERPERD,DINTEREST,DRATE,DTCREATED,STRCREATEDBY)
+			values
+			  (?, PRD_RSA_DTL_SEQ.NEXTVAL,?, ?, ?, ?,
+			   ?, ?, ?, ?,?)
+		</query>
+	</sql>	
+<!-- End: UAT_2387:reviewed by janga:Screen require for RSA Factor Table Setup -->	
+	<!--End :18/09/2007:MaybanPH1:deenaa -->
+	
+	<sql Id="InsertGmsvDetails">
+		<query>
+			insert into PRD_INVEST_GMSV_DTL
+			 (STRPRODCD,NPRODVER,NPOLYEARFROM,NPOLYEARTO,DRATIO,STRCREATEDBY,DTCREATED,DTUPDATED,STRUPDATEDBY,LGMSVDTLSEQ)
+			values
+			  (?,?,?,?,?,?,sysdate,sysdate,?,?)
+		</query>
+	</sql>
+	
+	<!-- Start:26/12/2007:MaybanPH1:tanujam:<TaskID>:EventBenefit -->
+	<sql Id="InsertRateScaleOption">
+	<!-- START:25-3-2009:TRM_MBF_PRDPMT_00001:avinashss:Code changes for addition of new field -->
+	
+	 <query>INSERT INTO PRD_PERIODIC_RATE_SCALE(LRATESCALESEQ,STRPRODCD,NPRODVER,NRATESCALEOPTION,STRCREATEDBY,DTCREATED,NSTARTYEAR)
+		VALUES(?,?,?,?,?,?,?)
+	 </query>
+	 <!-- END:25-3-2009:TRM_MBF_PRDPMT_00001:avinashss -->
+	 
+    </sql>
+    <!-- End:26/12/2007:MaybanPH1:tanujam-->
+    
+	<!--Start:08/01/2008:MaybanPH1:deenaa: PRD_Quotation Notes-->
+	
+	<sql Id="InsertQuotationNoteHdr">
+		<query>
+			insert into PRD_QUOTATION_HDR (LPRDQUOTHDRSEQNBR,STRPRODCD,NPRODVER,NSALESILLUTYPE,DTCREATED,STRCREATEDBY)
+			values(?,?,?,?,?,?)
+		</query>
+   </sql>	
+   <!-- start:16/06/2009:TRM_MBF_UL_00008:sonalb:added  order field -->
+	<sql Id="InsertQuotationNoteDtl">
+		<query>
+		insert into PRD_QUOTATION_DTL
+		 (LPRDQUOTDTLSEQNBR, LPRDQUOTHDRSEQNBR, STRREMARKS, DTCREATED, STRCREATEDBY, NORDER)
+		values
+		  (?,?, ?, ?, ?, ?)
+		</query>
+	</sql>
+ <!-- end:16/06/2009:TRM_MBF_UL_00008:sonalb: -->
+	<!--End :08/01/2008:MaybanPH1:deenaa -->
+	
+	<!-- Start:12/01/2008:MaybanPH1:sumedhd:<TaskID>:Reduction Details -->
+	<!-- start:01/04/2008:MaybanPH1:sonalb<defect id 512>:added NEVENTTYPE for event type field -->
+	<sql Id="InsertAfflnRednDtl">
+		<query>
+		insert into PRD_AFFLN_BEN_REDN_DTL
+		 (STRAFFLNSCHEDNBR,LAFFLNBENDTLSEQ,LREDNAFFLNBENDTLSEQ,NREDNTYPE,NREDNBASIS,DREDVALUE,LREDUCTIONDTLSEQ, NEVENTTYPE)
+		values
+		  (?,?,?,?,?,?,?,?)
+		</query>
+	</sql>
+	<!-- end:01/04/2008:MaybanPH1:sonalb<defect id 512>:added NEVENTTYPE for event type field -->
+	<!--End :12/01/2008:MaybanPH1:sumedhd -->
+	
+	<!-- Start:12/01/2008:MaybanPH1:sumedhd:<TaskID>:Reduction Details -->
+	<!--Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and Rate scale option columns  -->
+	<sql Id="InsertLienSeqDtl">
+		<query>
+		insert into PRD_BEN_AGEYRTERM
+		 (LAGEYRTERMSEQ,NTERMFROM,NTERMTO,NEVENTAGEFROM,NEVENTAGETO,NPOLYEARFROM,NPOLYEARTO,DBENRATE,NPRMPAYTERMFROM,NPRMPAYTERMTO,NRATESCALEOPTION,LAFFLNBENDTLSEQ)
+		values
+		  (?,?,?,?,?,?,?,?,?,?,?,?)
+		</query>
+	</sql>
+	<!--End|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and Rate scale option columns  -->
+	<!--End :12/01/2008:MaybanPH1:sumedhd -->
+	
+	<!-- Start:12/01/2008:MaybanPH1:sumedhd:<TaskID>:Reduction Details -->
+	<sql Id="LoyaltyBonusDtlInsert">
+		<query>
+		insert into PRD_LOYALT_BON_DTL
+		 (STRPRODCD,NPRODVER,NMINPRMPMTYRS,DLOYALTYRATEPERC,DMAXORGPREMPERC)
+		values
+		  (?,?,?,?,?)
+		</query>
+	</sql>
+	
+	<!--End :12/01/2008:MaybanPH1:sumedhd -->
+	<!--start:garima:30-07-2008:Takaful:For Contribution Based Product -->
+	<sql Id="InsertContributionDtls">
+		<query>
+		insert into PRD_CONTRIBUTION_M
+		 (STRPRODCD,NPRODVER,DCONTRIBUTIONAMT,STRCREATEDBY,DTCREATED)
+		values
+		  (?,?,?,?,sysdate)
+		</query>
+	</sql>
+	<!--end:garima:30-07-2008:Takaful:For Contribution Based Product -->
+	
+	<!--Start:Pranalee:10/10/11 : defect8323|CR365B|added for type of SA and SA in multiples of fields -->
+	<sql Id="InsertMultipleSADtls">
+		<query>
+			insert into PRD_MULTIPLESA_M
+			(STRPRODCD,NPRODVER,DMULTIPLESAAMT,STRCREATEDBY,DTCREATED)
+			values (?,?,?,?,sysdate)
+		</query>
+	</sql>
+	<!--End:Pranalee:10/10/11 : defect8323|CR365B|added for type of SA and SA in multiples of fields -->
+	
+
+	<!--start:Vandhana:APL Lapse Options -->
+	<sql Id="InsertAplLapseTrmtDetails">
+		<query>
+		INSERT INTO PRD_APLLAPSE_TRTMT
+		(LAPLLAPSETRTSEQ,NAPLLAPSTRTMT,DTEFFFROM,STRPRODCD,NPRODVER,STRCREATEDBY,DTCREATED)
+		VALUES(?,?,?,?,?,?,?)
+		</query>
+	</sql>
+	<!--End:Vandhana:APL Lapse Options -->
+	
+   <!--  Start:23/03/2009:chandrashekharb:TRM_MBF_MRTA_00010:Added for zero payment percentage --> 
+	<sql Id="InsertZeroPercDtls">
+	<query>INSERT INTO PRD_ZERO_PAYMENT(LRTAZEROPAYMENTSEQ,STRPRODCD,NPRODVER,DPERC,STRCREATEDBY,DTCREATED)
+		VALUES(?,?,?,?,?,Sysdate)
+	</query>
+   </sql>	
+	<!--  End:23/03/2009:chandrashekharb:TRM_MBF_MRTA_00010:Added for zero payment percentage -->
+	<!-- Start:prathamesh:05-06-2009:prathameshs:TRM_TKF_PRD_00002:Query added for prd_takaful_m -->
+	<!-- Start:Sunil:06-JAN-2012:CR-279:TRM_MBF_279_00001:field added for Mapex Indicator -->
+	<!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022|field added for Multiple Rate Indicator| START -->
+	<sql Id="WakalahDeductionsInsert">
+	<query>
+		insert into prd_takaful_m
+	    (
+	    ltkfmodelseq,
+	     strprodcd,
+	     nprodver,
+	     nfeetype, 
+	     nbasis, 
+	     strfundtypeto, 
+	     strfundtypefrom, 
+	     nratetype, 
+	     nseqofapplc, 
+	     dflatrate, 
+	     dflatamount, 
+	     nfrequency, 
+	     nunit, 
+	     nisstaff, 
+	     neventtype, 
+	     dtcreated,
+	     strcreatedby,
+	     nismapexapp,
+	     nismultirateapplc
+	     )
+	     VALUES
+	     (
+	      ?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,?
+	     ,SYSDATE
+	     ,?
+	     ,?
+	     ,?
+	     )
+	</query>
+	</sql>
+	<!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022| END -->
+	<!-- End:Sunil:06-JAN-2012:CR-279:TRM_MBF_279_00001:field added for Mapex Indicator -->
+	<!--   //Start:3/11/2014:TRM_MBF_CR434_0136:added takaful rate type -->
+	<!-- Start:25-Oct-2017:TRM_MBF_URF19496_225:Added NPRMTERMFROM,NPRMTERMTO -->
+	<!-- Start TRM_MBF_URF20283_230 : MegaILP Agency -->
+	<!-- Start:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added NCOVERAGETYPE,STROCCUPCLASS -->
+	<!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022|fields DTEFFFROM, DTEFFTO| START -->
+	<sql Id="WakalahVarRatesInsert">
+	<query>
+	 insert into
+     prd_takaful_rate_dtl
+     (
+     ltkfrateseq, 
+     ltkfmodelseq, 
+     npolyrfrom,
+     npolyrto, 
+     ntermfrom, 
+     ntermto, 
+     ngender, 
+     nagefrom, 
+     nageto, 
+     nbasisfrom, 
+     nbasisto, 
+     drate, 
+     damount, 
+     NRATETYPE,
+     dtcreated,
+     strcreatedby
+     ,NPRMTERMFROM
+     ,NPRMTERMTO
+     ,NISSMOKER
+     ,NISGIOIND
+     ,NCOVERAGETYPE
+     ,STROCCUPCLASS
+     ,DTEFFFROM
+     ,DTEFFTO
+    )
+    values
+    (
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     SYSDATE,
+     ?
+     ,?
+     ,?
+     ,?
+     ,?
+     ,?
+     ,?
+     ,?
+     ,?
+    )
+    </query>
+    </sql>
+    <!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022| END -->
+    <!-- End:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added NCOVERAGETYPE,STROCCUPCLASS -->
+    <!-- End TRM_MBF_URF20283_230 : MegaILP Agency -->
+    <!-- End:25-Oct-2017:TRM_MBF_URF19496_225:Added NPRMTERMFROM,NPRMTERMTO -->
+    <!--   //Start:3/11/2014:TRM_MBF_CR434_0136:added takaful rate type -->
+	<!-- End:prathamesh:05-06-2009:prathameshs:TRM_TKF_PRD_00002-->
+	<!-- Start:prathameshs:9-06-2009:TRM_TKF_PRD_00003:Queries for Partial Withdrawal Setup -->
+	<sql Id="TkfPartialWithdrawalInsert">
+	<query>
+		 	insert into prd_tkf_part_withd_m
+		    (
+		      ltkfpartwithdseq, 
+		      strprodcd, 
+		      nprodver, 
+		      nwithdstartyear, 
+		      nmaxwithdallwd, 
+		      dminwithamnt, 
+		      dminpabalamnt, 
+		      dminpabalperc, 
+		      nrateamtcriteria, 
+		      dwithdfee, 
+		      dtcreated, 
+		      strcreatedby
+		    )
+		    values
+		    (
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      SYSDATE,
+		      ?
+		    )
+	</query>
+	</sql>
+	<sql Id="TkfPartialWithdrawalDtlInsert">
+		<query>
+				insert into prd_tkf_part_withd_dtl
+			    (
+			        ltkfpartwithddtlseq, 
+			        ltkfpartwithdseq, 
+			        npolyrfrom, 
+			        npolyrto, 
+			        dmaxrate, 
+			        nyrsbfrmaturityfrom, 
+			        nyrsbfrmaturityto, 
+			        dtcreated, 
+			        strcreatedby
+			    )
+			    values
+			    (
+			        ?,
+			        ?,
+			        ?,
+			        ?,
+			        ?,
+			        ?,
+			        ?,
+			        SYSDATE,
+			        ?
+			    )
+		</query>
+	</sql>
+	<!-- End:prathameshs:9-06-2009:TRM_TKF_PRD_000003 -->	
+	<!-- End:prathamesh:05-06-2009:prathameshs:TRM_TKF_PRD_00002-->
+	 <!-- Start:04/06/2009:anupd:TRM_TKF_PRD_00005:Added insert query for surplus sharing -->
+	<sql Id="InsertHdrRec">
+	<query>INSERT INTO PRD_TKF_SHARING_DECLR_M (LSHAREDECLSEQ, STRPRODCD, NPRODVER, NSHARETYPE, NRATETYPE, DTCREATED, STRCREATEDBY) 
+		VALUES (PRD_TKF_SHARING_DECLR_M_SEQ.NEXTVAL,?,?,?,?, SYSDATE,?)
+	</query>
+   </sql>	
+	
+   <sql Id="InsertDtlRec">
+	<query>INSERT INTO PRD_TKF_SHARING_DTL (LSHAREDTLSEQ, LSHAREDECLSEQ, STRFUNDTYPE, NRATEFLAT, DTCREATED, STRCREATEDBY) 
+		VALUES (PRD_TKF_SHARING_DTL_SEQ.NEXTVAL,?,?,?,SYSDATE,?)
+	</query>
+   </sql>
+  <!-- End:04/06/2009:anupd:TRM_TKF_PRD_00005:Added insert query for surplus sharing -->
+  <!-- Start:07/06/2009:anupd:TRM_TKF_PRD_00004:Added insert query for Top up -->  
+   <sql Id="InsertTopUpRec">
+	<query>
+	INSERT INTO PRD_TKF_TOPUP_RULES (NMAXNBRTPUPPRYR, NMAXTOPUPRATE, NBASIS, NRATEOFALLOC, STRPRODCD, NPRODVER, STRFUNDTYPE, DTCREATED, STRCREATEDBY) 
+	VALUES (?,?,?,?,?,?,?, SYSDATE,?)
+	</query>
+   </sql>
+  <!-- End:07/06/2009:anupd:TRM_TKF_PRD_00004:Added insert query for Top up -->	
+  <!-- Start|CR362|TRM_MBF_362_0043|Ram|Non Annuity type setup added-->	
+  <!-- Start|UAT|7319|21-02-12|Ram|To save admin fee value (Table/Flat)-->	
+  <sql Id="SettlementInsert">
+	<query>
+		 	insert into prd_settlement_dtl
+		    (
+		      strprodcd, 
+		      nprodver, 
+		      nsettleperiod, 
+		      nstlmntagefrm, 
+		      nstlmntageto, 
+		      dminamount, 
+		      dadminfee, 
+		      dmintopupamount,
+		      dmultipleof,
+		      dtopupcharge,
+		      ntopuppolyr,
+		      npmntfactor,
+		      nadminfactor, dmgmtpercnt, dtcreated, strcreatedby,strnonanntblcd,NISADMINFLAT
+		    )
+		    values
+		    (
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,
+		      ?,?,?,?,?,?,?,?,?,?
+		    )
+	</query>
+	</sql>
+	<!-- End|UAT|7319|21-02-12|Ram|To save admin fee value (Table/Flat)-->
+<!-- End|CR362|TRM_MBF_362_0043|Ram|Non Annuity type setup added-->	
+	<!-- start:TRM_MBF_280_00002:CR280:29/12/2011:mrunal:added -->
+	<!-- start:TRM_MBF_280_00002:CR280:09/01/2012:mrunal:added new columns NTERMFROM and NTERMTO -->
+	<sql Id="InsertPrdScaleFactor">
+		<query>
+			Insert into PRD_SCALE_FACTOR
+			       (
+				   		STRPRODCD,
+				   		NPRODVER,
+				   		NUNPINSTFRM,
+				   		NUNPINSTTO,
+				   		DFACTOR,
+				   		STRCREATEDBY,
+				   		DTCREATED,
+				   		LSCALEFCTRSEQ,
+				   		NTERMFROM,
+				   		NTERMTO
+				   	)
+		     values
+		     		(
+		     			?,
+		     			?,
+		     			?,
+		     			?,
+		     			?,
+		     			?,
+		     			?,
+		     			?,
+		     			?,
+		     			?
+		     		)					
+		</query>
+	</sql>
+	<!-- end:TRM_MBF_280_00002:CR280:09/01/2012:mrunal:added new columns NTERMFROM and NTERMTO -->
+	<!-- end:TRM_MBF_280_00002:CR280:29/12/2011:mrunal:added -->
+	<!-- CR 280 TRM_MBF_280_00002 START-->
+	<sql Id ="InsertPRDAllocRate">
+	<query>
+	Insert into PRD_ALLOC_RATES
+	(
+	strprodcd,nprodver,NPOLYRFROM,npolyrto,ntermfrom,ntermto,nisstaff,dallocrate,strcreatedby,dtcreated,lallocrateseq) 
+         VALUES(?,?,?,?,?,?,?,?,?,sysdate,?)
+      </query>
+      </sql>
+	
+      <sql Id="AdminFeeInsert">
+      <query>
+	Insert into PRD_ADMIN_FEE_M
+	(
+	strprodcd,nprodver,NPOLYRFROM,npolyrto,dadminfee,dtcreated,strcreatedby,ladminfeeseq) 
+         VALUES(?,?,?,?,?,sysdate,?,?)
+      </query>
+      
+      </sql>
+      
+      
+       <!-- CR 280 TRM_MBF_280_00002 END-->
+       <!--Start: :CR 335|Lien Master for SI -->
+       <sql Id="InsertJuvHdrLienSI">
+       	<query>
+       		INSERT INTO
+       		PRD_JUV_HDR(LJUVHDRSEQ,STRPRODCD,NPRODVER,NJUVBENTYPE,NISJUVPLAN,DTCREATED,STRCREATEDBY)
+       		VALUES (?,?,?,?,?,sysdate,?)
+       	</query>
+       </sql>
+       <sql Id="InsertJuvDtlLienSI">
+       	<query>
+       		INSERT INTO
+       		PRD_JUV_DTL(LJUVDTLSEQ,LJUVHDRSEQ,NAGEFROM,NAGETO,DRATE,DTCREATED,STRCREATEDBY)
+       		VALUES(?,?,?,?,?,SYSDATE,?)
+       	</query>
+       </sql>
+       <!--End: :CR 335|Lien Master for SI -->
+
+	<!-- Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+	<sql Id="InsertPSAutoExtraUnit">
+		<query>
+			INSERT INTO PS_AUTO_EXTRA_UNIT_WITHDRAW
+			(LAUTEXTWITHSEQ,STRPRODCD,NPRODVER,DTDIVDECLARE, NSTATUS ,NISPROCESSED,DTCREATED,
+			STRCREATEDBY,DTTRANS,STRCURRCD, NEVENTTYPE,LBONHDRSEQ,STRUNITFUNDCD,NISAMEND,NISAUTH) 
+		    VALUES(?,?,?,?,?,?,SYSDATE,?,?,'RM',?,?,'DUMMY',0,0)
+		</query>
+	</sql>
+	<!-- End Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout --> 
+<!--Start:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added SAM Factor for Elite Investment product-->
+   	<sql Id="InsertPRDSAMFactor">
+   	<query>
+		INSERT INTO PRD_SAM_FACTOR(LSAMFACTSEQ,STRPRODCD,NPRODVER,NAGEFROM,NAGETO,NSAMFACTOR,DTCREATED,STRCREATEDBY) 
+		VALUES(?,?,?,?,?,?,SYSDATE,?)
+   	</query>
+   </sql>
+   <!--End:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added SAM Factor for Elite Investment product-->
+   
+   <!-- Start |Pranav |01-06-2022 | TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility -->
+   <sql Id="InsertBoosterElgRl">
+   	<query>
+		INSERT INTO prd_vsa_prm_booster_rules(LVSAPRMELIGIBLSEQ,STRPRODCD,NPRODVER,STRELIGIBILITYDESC,NELIGIBILITY,DTCREATED) 
+		VALUES(?,?,?,?,?,SYSDATE)
+   	</query>
+   </sql>
+   <!-- End |Pranav |01-06-2022 | TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility-->
+   
+<!--Start:CR-365|SunilN|27-MAY-2013|Tracebility No.:TRM_MBF_CR365_0058|added query for Loayalty bonus for ELITE Investmentlink Product-->
+<!-- START:24/7/2014:DEFECT-9758:added NPREMBASIS field -->
+    <!--Start://Loyalty_Bonus_CR_development-2023-04-10_SanketP-added STRFUNDTYPE-->
+  	<sql Id="InsertLoyaltyBonus">
+	   	<query>
+			INSERT into PRD_LOYALT_BON_DTL
+				(
+					LLOYATBONSEQ,
+					STRPRODCD,
+					NPRODVER,
+					NMINPRMPMTYRS,
+					DLOYALTYRATEPERC,
+					DMAXORGPREMPERC,
+					NPREMBASIS,
+                    STRFUNDTYPE,
+                    DTCREATED
+				)
+			VALUES(?,?,?,?,?,?,?,?,SYSDATE)
+	   	</query>
+    </sql>
+    <!--END//Loyalty_Bonus_CR_development-2023-04-10_SanketP-added STRFUNDTYPE-->
+<!-- END:24/7/2014:DEFECT-9758:added NPREMBASIS field -->
+<!--End:CR-365|SunilN|27-MAY-2013|Tracebility No.:TRM_MBF_CR365_0058|added query for Loayalty bonus for ELITE Investmentlink Product-->	
+<!--Start:CR264:1-oct-2013:TRM_MBF_CR264_0067:Added new screen for Takaful rate master.-->
+	<sql Id="TakafulRateInsert">
+		<query>
+	      Insert into intf_withholding_tax_dtl(
+	      	LWHTSEQ           
+			,DTDECLARATION     
+			,NDECLARATIONTYPE  
+			,STRPRODCD 
+			,NPRODVER        
+			,NFISCALYEAR       
+			,DTEFFFROM         
+			,DTEFFTO           
+			,NCLIENTTYPE       
+			,NFUNDTYPE         
+			,NBASIS            
+			,DGROSSRATE        
+			,DTAXRATE          
+			,DNETRATE          
+			,DGROSSAMNT        
+			,DTAXAMNT          
+			,DNETAMNT          
+			,NUNIT             
+			,NSTATUS           
+			,DTCREATED         
+			,STRCREATEDBY) 
+		values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,sysdate,?)
+		</query>
+	</sql>    
+	<!--End:CR264:1-oct-2013:TRM_MBF_CR264_0067:Added new screen for Takaful rate master.-->
+	<!-- Start:27-NOV-2013:CR389:TRM_MBF_CR389_0085:SunilN:added for Investment Link - Top up allocation rate details -->
+	<sql Id="InsertTopUpAllocRates">
+		<query>
+			INSERT INTO PRD_TOPUP_ALLOC_RATES (
+				  LTOPUPALLOCRATESEQ, 
+				  STRPRODCD,
+				  NPRODVER,
+				  NTERMFROM, 
+				  NTERMTO,
+				  NPOLYRFROM,
+				  NPOLYRTO,
+				  NISSTAFF,
+				  DALLOCRATE,
+				  STRCREATEDBY,
+				  DTCREATED
+			  ) 
+			  VALUES (?,?,?,?,?,?,?,?,?,?,SYSDATE)			
+		</query>
+	</sql>
+	<!-- End:27-NOV-2013:CR389:TRM_MBF_CR389_0085:SunilN:added for Investment Link - Top up allocation rate details -->
+
+<!--Start:12-02-14|CR#395-P2|TRM_MBF_CR395P2_0099|Yash|Change in affliction setup to capture products for which SA to be reduced -->
+		<sql Id="PsAddAfflnProdMap">
+		<query>
+			INSERT INTO PRD_AFFLN_BEN_REDN_PRD_MAP (
+				  LREDUCTIONPRODMAPSEQ,
+				  LREDUCTIONDTLSEQ, 
+				  STRPRODCD,
+				  NPRODVER,
+				  DTCREATED,
+				  STRCREATEDBY
+				  
+			  ) 
+			  VALUES (?,?,?,?,?,?)			
+		</query>
+	</sql>
+ <!--End:12-02-14|CR#395-P2|TRM_MBF_CR395P2_0099|Yash|Change in affliction setup to capture products for which SA to be reduced -->
+ <!-- Start:20-MAR-2015:CR458-TRM_MBF_CR458_160:SunilN: -->
+   <sql Id="InsertMinMaxLoanAmountDetails">
+	<query>
+		INSERT INTO PRD_MINMAX_LOAN_AMT
+		(lminmaxlaseq,strprodcd,nprodver,neagefrommale,neagetomale,
+		neagefromfemale,neagetofemale,dmaxloanamt,dminloanamt,
+		strcreatedby,dtcreated)
+		VALUES(PRD_MINMAX_LOAN_AMT_SEQ.Nextval,?,?,?,?,?,?,?,?,?,SYSDATE)
+	</query>
+  </sql>
+ <!-- End:20-MAR-2015:CR458-TRM_MBF_CR458_160:SunilN: -->
+ 
+ <!-- Start:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group --> 
+	<sql Id="InsertPRDSAGrpDetails">
+	<query>INSERT INTO PRD_MAXSA_SP_PARAM_DTL
+				(LGRPPRDSEQ,STRGRPID,STRPRODCD,NPRODVER,NGENDER,
+				NENTRYAGEFROM,NENTRYAGETO,DMAXPARAMVALUE,STRCREATEDBY,DTCREATED)
+		VALUES(?,?,?,?,?,?,?,?,?,SYSDATE)
+	</query>
+   </sql>	
+<!-- End:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group -->
+
+	<!-- START:URF136967: 21/3/2017:LokeshR:Added for Affln detail -->
+	<sql Id="InsertAfflictionDtl">
+	 <query>INSERT INTO PRD_EVENT_BEN_MAP_AFFLN(LEVENTAFFLNSEQ, LEVENTBENSEQ, LEVENTMAPSEQ, STRAFFLNSCHEDNBR, NEVENTAGEFROM, NEVENTAGETO, DTCREATED, STRCREATEDBY )
+		VALUES(?,?,?,?,?,?,?,?)
+	 </query>
+    </sql>
+	<!-- END:URF136967: 21/3/2017:LokeshR:Added for Affln detail -->
+	
+	<!-- Start:15-09-2017:TRM_MBF_URF19496_225:Added for Medical Deductible Limit -->
+	<sql Id="InsertPRDDeductLimitDetails">
+	<query>INSERT INTO PRD_MUL_MED_DED_LIMIT
+		  (LMEDDEDLIMITSEQ,STRPRODCD,NPRODVER,
+		   NDEDUCTIONLIMIT,STRCREATEDBY,DTCREATED)
+		  VALUES(?,?,?,?,?,SYSDATE)
+	</query>
+   </sql>
+	<!-- End:15-09-2017:TRM_MBF_URF19496_225:Added for Medical Deductible Limit -->
+	
+	<!-- Start:02-Jan-2018:TRM_MBF_URF20283_230:Added to display Component Details -->
+	<sql Id="InsertComponentData">
+	 <query>INSERT INTO PRD_COMPONENT_M
+	 (LPRDCOMPONENTSEQ, STRBASEPLANCDCD, NBASEPLANVER, STRPRODCD, NPRODVER,
+	  NTYPE, STRCOMPONENTCD, DPERCENTAGE, DAMOUNT, STRCREATEDBY, DTCREATED)
+	 VALUES(?,?,?,?,?,
+	 ?,?,?,?,?,SYSDATE)
+	 </query>
+    </sql>
+	<!-- End:02-Jan-2018:TRM_MBF_URF20283_230:Added to display Component Details -->
+	<!-- Start:30/05/2018:Ashish R: TRM_MBF_CR372_239: Code Added for Golden Retirement  -->
+	<sql Id="InvestmentHdrInsert">
+     <query>
+         INSERT INTO prd_bon_hdr( 
+		 lbonhdrseq,
+		 nfiscalyear,
+		 CBONTYPE,
+		 strprodcd,
+		 nprodver,
+        STRFUNDNAME,
+     STRFUNDCD,
+     NACCYEARFROM,
+     NACCYEARTO,
+     NPAYYEARFROM,
+     NPAYYEARTO,
+     NGMCPMT_PERC,
+		 nbonbas,
+		 nbonunit,
+		 strcreatedby,
+     dtcreated
+		 
+		 )
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,SYSDATE)
+     </query>
+   </sql>
+   
+    <sql Id="InvestmentDtlInsert">
+     <query>
+         INSERT INTO prd_bon_dtl(
+		 lbondtlseq,
+		 lbonhdrseq,
+		 npolyearfrom,
+		 npolyearto,
+		 dactualbonrate,
+		 dtcreated,
+		 strcreatedby,
+		 NCALCDATE,
+     nstatus,NFROMYEAR)
+        VALUES(?,?,?,?,?,SYSDATE,?,?,?,?)
+     </query>
+   </sql>
+  <!--End:30/05/2018:Ashish R: TRM_MBF_CR372_239: Code Added for Golden Retirement --> 
+  
+  <!-- Start:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added for Loyalty bonus changes -->
+  <!-- Start:10-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Loyalty bonus change enhancement:EFFCTIVEFROM, EFFECTIVETO & UNIT Added -->
+  <!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-Start Added STRFUNDTYPE-->
+  <sql Id="InsertJumboLoyaltyBonus">
+	   	<query>
+			INSERT INTO PRD_LOYALT_BON_BENIF_DTL
+				(
+					LLOYATBONBSEQ,
+					STRPRODCD,
+					NPRODVER,
+					BASIS,
+					NPOLICYYEARFROM,
+					NPOLICYYEARTO,
+					RATE, 
+					FREQ,
+					EFFCTIVEFROM,
+					EFFECTIVETO,
+					UNIT,
+                    STRFUNDTYPE
+				)
+			VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
+	   	</query>
+    </sql>
+    <!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-Start Added STRFUNDTYPE-->
+    <!-- End:10-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Loyalty bonus change enhancement:EFFCTIVEFROM, EFFECTIVETO & UNIT Added -->
+  <!-- End:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added for Loyalty bonus changes --> 
+  <!-- Start:09-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Loyalty bonus change enhancement -->
+  	<sql Id="InsertJumboLoyaltyBonusSchedule">
+	   	<query>
+			INSERT INTO PRD_LOYALTY_SCHEDULE
+				(
+					LLOYALSCHEDSEQ,
+					LLOYATBONBSEQ,
+					NPAYOUTYR,
+					NPRODVER,
+					STRPRODCD
+				)
+			VALUES(?,?,?,?,?)	
+	   	</query>
+    </sql> 
+  <!-- End:09-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Loyalty bonus change enhancement -->
+  <!-- Start : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 -->
+  <sql Id="InsertInvCompDet">
+    <query>
+           INSERT INTO PRD_BEN_COMP_MAP(LMAPSEQ,LEVENTMAPSEQ,LEVENTBENSEQ,NBENTYPE,NCOMPCD,NCOMPFLAG,NEVENTTYPE,STRPRODCD,NPRODVER,DTCREATED,STRCREATEDBY)
+		   VALUES(?,?,?,?,?,?,?,?,?,SYSDATE,?)
+    </query>
+  </sql>
+  <!-- End : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 -->
+ </sql-root>

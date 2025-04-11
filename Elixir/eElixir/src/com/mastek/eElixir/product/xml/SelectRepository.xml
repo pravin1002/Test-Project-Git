@@ -1,0 +1,3430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-root SYSTEM "SqlRepository.dtd">
+<!--  Change History:
+ * 
+ * SR No.| Modified By   | Modification Date | Description
+ *
+ * 1     |Ashish R       |30/05/2018              | TRM_MBF_CR372_239| Code Added for Golden Retirement
+ * 2	 |Ketan More	 |02/07/2018		      | Jumbo ILP Surrender Charges Change - TRM_URF_21454_56_57_241
+*  3    |Ketan More     |10/08/2018              |TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Alteration Error
+ * 4    |Sweta N        |14-Aug-2019               |URF_25231_283:Sustainability Changes:added NISSUSTPRMAPPLC column
+ *5    |Athsal Nadar   |  30/03/2020        |TRM_MBF_URF27161_295_P1|Loyalty Bonus Screen Issue 	
+ *6    |Athsal Nadar   |20/04/2021          |TRM_MBF_URF27389_311_P2|Protect 88 PH2
+ *7    |Athsal Nadar   |21/05/2021          |TRM_MBF_URF24268_P1_289:IFRS PH1 |Added to display Waiver Indicator
+ *8    |Pranav         |23/02/2022                |ECNURF_316_EPF_PHASE2_TSD_Vs_1.0
+ *9    |Pranav         |28/02/2022                |Added nprmpmtyears and npolterm: FSD_MaxiPro_Campaign_v1.1
+ *10    |Pranav         |28/02/2022                |Added nprmpmtyears and npolterm: FSD_MaxiPro_Campaign_v1.1
+ *11   |Pranav         |18-4-2022               | Added for Waiting Period and Waiting Unit
+ *12   |Pranav         |25-04-2022              |  TRM_MBF_ECNURF_162_P2 | Adding DPERC in Variable Premium Screen 
+ *13   |Pranav         |01-06-2022              | TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility
+ *14   |Manjunath H    |10-09-2022			|TRM_MBF_URF_24268_338_MULT_WKL_RATE|Addition of new fields.
+ *15   |SanketP        |23-06-2023          |TRM_MBF_URF_24268_346|Loyalty Bonus CR|Added Fundtype Field
+ *16   |Rohit#23       |13/07/2023          |TRM_MBF_ECNURF_1519_350_P1||Added a.niscashpaycommageappl,a.ncashpaycommage
+ *17   |Rohit#22       |05-07-2023              |TRM_MBF_URF24268_FIN_LTB_PROV_349||Added NISLTB
+
+ 
+-->
+<sql-root>
+   <sql Id="FindProductByProductCode">
+	 <query>SELECT Max(nprodver) FROM prd_key_info WHERE strprodcd = ?</query>
+   </sql>
+   <!-- start:08/04/2009:TRM_MBF_POLBEN_00001:sonalb:addedd nIsDivApplc-->
+   <sql Id="ProductSearch">
+	 <query>SELECT strprodcd,nprodtype,nprodver,nrisktype,strcurrcd,cbontype,strriskcd,
+	        dtefffrom,dteffto,strcountrycd,strprodname,nsplfeatureflg,strstatecd,(select strstate from com_countrystate_m where strstatecd=pki.strstatecd and strcountrycd=pki.strcountrycd)strState,
+		strprodline,strproddesc,strcreatedby,dtcreated,nisrta,nprodstat,dtprodstatchange,
+		strupdatedby,dtupdated,strremark,nisjuvnpol,nValGrp,nCompanyInd,nIsTakafulProd,nIsYrlyRenewable,nPrdCatg,strprodothname,nIsDivApplc
+		FROM prd_key_info pki WHERE strprodcd = ? AND nprodver=?</query>
+   </sql>
+   <!-- end:08/04/2009:TRM_MBF_POLBEN_00001:sonalb-->
+     <!-- Start:02/04/2009:MaybanPH1:dipikam:added for Status description -->
+    <sql Id="ProductListSearch">
+	 <query>SELECT pki.strprodcd,pki.nprodver,
+      pki.strprodname,cpum.strcddesc strcountrycd,pki.strstatecd,
+	 (select strstate from com_countrystate_m 
+         where strstatecd=pki.strstatecd 
+         and strcountrycd=pki.strcountrycd)strState,
+	 pki.dtefffrom,pki.dteffto,pki.nprodstat, 
+       (select STRCDDESC FROM com_param_system_m cpsm 
+      WHERE  cpsm.iparamtypecd = 1049 AND pki.nprodstat =  cpsm.NPARAMCD) strStatus
+	 FROM prd_key_info pki, com_param_user_m cpum
+	 WHERE  cpum.iparamtypecd = 5518
+         AND pki.strcountrycd = cpum.strparamcd
+	 </query>
+   </sql>
+    <!-- End:02/04/2009:MaybanPH1:dipikam:added for  Status description -->
+    <!-- //Start:16/07/2009:Defect 3828:viniths: Changed Like to Equals in sql Id="searchProductByProductCode"-->
+   <sql Id="searchProductByProductCode">
+   <query>
+             SELECT nProdVer FROM prd_key_info WHERE upper(strprodcd) = upper(?)
+   </query>
+   </sql>
+      <!-- //End:16/07/2009:Defect 3828:viniths: Changed Like to Equals in sql Id="searchProductByProductCode"-->
+<!-- Start:29/May/2009:anupd:TRM_TKF_PRD_00011:modified query for allow si on sa,paid up rate and repay option-->
+<!--Start:14/12/2009:SIT 524:pritirs:handling for ODL and ODP products-->  
+<!-- //start:01/02/2010:Sonalb:000|SIT|Reviewed By Sonal|add is commission pay on premium flag -->
+<!--  //start:13/05/2010:sonalb:1442|UAT|Reviewed By sonal|agged flag for TP age -->
+<!--Start:7/05/2011:vigneshA|3891|added nwopformcd for wop occupation formula field-->
+<!--Start:7/12/2011:vigneshA|256A|added NISCSVFACTORAPPL -->
+<!--Start : RajeshP : CR_380 : Code chanegs done to capture the Product Premium Group for sub standard cases  -->
+<!--Start:Pranalee:10/10/11 : defect8323|CR365B|added for type of SA and SA in multiples of fields --> 
+<!--start:22-mar-2013:govinds|DM Defect 178|Made necessary changes to fetch the FD product flag from prd_info_4-->
+<!-- Start:14/08/2014:Suresh Singh:TRM_MBF_CR406_0118_Drop1:CR406|Added new column NISPRODGSTAPPL -->
+<!--Start: CR-91|28/05/2012|Tracebility Code:TRM_MBF_91_00012|ravis|nacfFreq filed added -->
+<!-- Start:18-MAR-2015:CR458-TRM_MBF_CR458_160:SunilN:Added d.strprodlagrp --> 
+<!-- Start:27/11/2014:TRM_MBF_CR435_0145_PS:Vishakha:Added Code to get NHOLDINGBASIS -->
+<!--Start:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group 2 -->
+<!--Start:07-Feb-2013:RaviB|CR 476|Introduce new feature with Advance Payment Applicable flag in prd_info_4 -->
+<!--Start:17/6/2017:Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1|Fetch nmaxage ,nprmpayingtermage from prd_info_2 and ngsrtype from prd_info_1 , DMINPAYOUTAMT,DPAYOUTMULTIPLEOF-->
+<!-- Start:15-09-2017:TRM_MBF_URF19496_225:Added NMULMEDDEDLMT, NMAXEAGEMULDEDOPT, STRPRODUNITGRP -->
+<!-- Start TRM_MBF_URF18729_224_P2 added column NISVARCOMMAPPL -->
+<!-- Start:24/05/2018:TRM_URF_21454_56_57_241:Jumbo ILP : Added columns NENRICHERAPPLC,NISJUMBOPRD,NMINSUSTAINPERIOD,NSUSTAINABILITYAPPL,NPRODTYPE -->
+<!-- //Start 20|03|2019 |TRM_MBFURF_CLTA_CLTT_23816_265 : Added columns b.NISLEVELTERM -->
+<!--start :18/12/2013/:CR364:Added Unutilized basic CSV for PV option in product applicability -->
+<!-- START:30/03/2020:TRM_MBF_URF27161_295_P1:MAR ElitePlus Takafulink:Phase 1 -->
+<!-- Start : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 : Added NINVCOMPAPPLC -->
+<!-- Start|Sweta|30/12/2020 |Mar Takaful Ph2 |URF27161 -->
+<!-- Start:28-Oct-2021:TRM_MBF_ ECNURF_81:Family Plan Development -->
+<!-- start:29-nov-2021|govind|TRM_MBF_ ECNURF_81:Family Plan Development|Removed a.NMAXPOLAPPLC -->
+
+<!-- start :23/02/2022/: Pranav :Added column as NNONSTDSURPLUS in ProductApplicability : ECNURF_316_EPF_PHASE2-->
+
+<!-- start:govinds:TRM_MBF_ECNURF_316_324_PH2 | Added NREPARTWINDOWDAYS -->
+<!-- Start:12-07-2023||Rohit#23||TRM_MBF_ECNURF_1519_350_P1||Added b.niscashpaycommageappl,b.ncashpaycommage -->
+<sql Id="ProductsApplicability">
+	<query>SELECT a.niscmpnyreimmedfee,a.nisrenewappl,a.npolyearloan,a.nisriappl,
+		a.nisavlfornb,a.nispolfeeappl,a.nispolloanappl,a.niscnvappl,a.npaycommonxprm,
+		a.dcoefficientrate,a.nissteprateappl,a.nsteprateperd,a.nsteprateperdunit,a.nfctfndfrmreqd,
+		a.npolcomcopt,a.nnonstdsurplus,a.ngsrtype,a.nritpdbappl,a.nwopformcd,a.strupdatedby,a.dtupdated,a.strcreatedby,a.dtcreated,
+		b.nisfixterm,b.ngenderapplflg,b.nnbroflives,b.nprmceaseagemale,
+		b.nprmceaseagefemale,b.nagecalcbasis,b.njntagecalcbasis,b.nminentryagechild,
+		b.nminterm,b.nmaxterm,b.nmaxage,b.nprmpayingtermage,b.ntermunit,b.nminentryageunit,b.nvestage,b.nparticipatingage,
+		b.nmatagemale,b.nmatagefemale,b.nexpiryagemale,b.nexpiryagefemale,
+		b.lruleseq,b.nmindefermentperd,b.nmaxdefermentperd,b.nminrepmtperd, 
+		b.nrtadispfreq,b.nrtacalcfreq, b.nmaxassurance,b.strschedrepcal,
+		b.nminpayoreage,b.nmaxpayoreage,b.nisagediffappl,b.nminagediff, b.NAGELATOPROPSER, b.NMAXENTRYAGECHILD,b.niscashpaycommageappl,b.ncashpaycommage,
+        c.niscvapplonbon,c.ncvstartyear,c.nbonstartyear,
+		c.npdupstartyear,c.niscvappl,c.nispdupappl,c.nisaplappl,c.nisetaappl,
+		c.netastartyear,c.nisautononforf,c.nautononforfopt,
+		d.nprmtype,d.dbassaratiorider,d.dbassaratiosrider,d.nisvarsaappl,d.nprmpmttype,
+		d.nissprminstt,d.nisprmaccr,a.niswaiverofprmprod,a.nisunitbasedprod,a.damntperunit,a.NISALLOWTHIRDPARTY,a.STRSISCD,
+		a.nallowpolissubfrcomc,b.NMINSERVINTYRS,b.NMAXSERVINTYRS,b.NISZEROPYMNTAPPL,b.NISBALOONPYMNTAPPL,
+		b.NISSERVINTYRSAPPL,b.NRESTFREQ,b.DMAXINTERESTRATE,d.NVARPRMBASIS,d.NREFUNDUNEARNEDPRM,d.STRPRODSAGRP,d.STRPRODSPGRP,															
+		e.nmaxnbrofrevival,e.nmaxperdrevival,e.nrevivalperdunit,b.DMININTERESTRATE,d.NFDMIGRATIONAPPLC,		
+    a.dtfixedcomc,a.dtfixedexpiry,a.dtpolgenafter,d.dPrmMultipleOf,d.ncontributionbased,d.DMEDANNLLIMIT,b.NISTERMRULEAPPL
+    ,c.NISASSETSHAREAPPL,c.DTASSETSHAREAPPL,c.NISSISAPREM,c.NPAIDUPPARATE,c.NREPAYOPTION,a.nisAsscwithepf,b.niscreditterm, a.NPAYCOMMIONPRM	
+    ,a.NMANDTHRDPARTYAGE,c.NISCSVFACTORAPPL,c.NACFFREQ, d.STRPRODSPGRPSUBSTD,d.NTYPEOFSA,d.DSAMULTIPLEOF, d.NFDPRODUCT, c.NISCSVFACTORAPPL,d.dmeddedlimit,d.dmedlifelimit,a.NISPRODGSTAPPL,b.NHOLDINGBASIS,d.strprodlagrp,d.STRPRODSAGRP2,d.nisadvanprm,d.nadvprmminterm,d.DMINPAYOUTAMT,d.DPAYOUTMULTIPLEOF,
+(select NVL(p.nsplfeatureflg,0) from prd_key_info p where p.strprodcd = a.strprodcd and p.nprodver =a.nprodver AND p.nprodtype = 1) nsplfeatureflg
+    ,D.STRPRODUNITGRP,D.NMAXEAGEMULDEDOPT,D.NMULMEDDEDLMT
+,a.NISVARCOMMAPPL
+    ,A.NENRICHERAPPLC,A.NMINSUSTAINPERIOD,A.NSUSTAINABILITYAPPL,F.NPRODTYPE,b.NISLEVELTERM,c.nisucsvappl,c.nucvstartyear,d.STRPRODSAGRP3,a.NINVCOMPAPPLC
+,b.NISRIDERTYPE  --MAR Takaful ph2
+,a.NFAMILYPLANAPPLC,a.NCOHORTYRTAPPLC
+,e.NREPARTWINDOWDAYS
+		FROM prd_info_1 a,prd_info_2 b,prd_info_3 c,prd_info_4 d,
+		prd_info_5 e,PRD_KEY_INFO F
+		WHERE a.strprodcd = ? AND a.nprodver = ? 
+		AND a.strprodcd = b.strprodcd AND a.nprodver = b.nprodver
+		AND a.strprodcd = c.strprodcd AND a.nprodver = c.nprodver 
+		AND a.strprodcd = d.strprodcd AND a.nprodver = d.nprodver
+		AND a.strprodcd = e.strprodcd AND a.nprodver = e.nprodver
+		AND A.STRPRODCD = F.STRPRODCD AND A.NPRODVER = F.NPRODVER
+	</query>
+   </sql>
+<!-- End:12-07-2023||Rohit#23||TRM_MBF_ECNURF_1519_350_P1||Added b.niscashpaycommageappl,b.ncashpaycommage -->
+   <!-- end:govinds:TRM_MBF_ECNURF_316_324_PH2 -->
+   <!-- end :23/02/2022/: Pranav :Added column as NNONSTDSURPLUS in ProductApplicability : ECNURF_316_EPF_PHASE2-->
+   <!-- end:29-nov-2021|govind|TRM_MBF_ ECNURF_81:Family Plan Development|Removed a.NMAXPOLAPPLC -->
+   <!-- End:28-Oct-2021:TRM_MBF_ ECNURF_81:Family Plan Development -->
+ <!-- End|Sweta|30/12/2020 |Mar Takaful Ph2 |URF27161 -->
+   <!-- End : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 : Added NINVCOMPAPPLC -->
+   <!-- END:30/03/2020:TRM_MBF_URF27161_295_P1:MAR ElitePlus Takafulink:Phase 1 -->
+<!-- End :18/12/2013/:CR364:Added Unutilized basic CSV for PV option in product applicability -->
+   <!-- //End 20|03|2019 |TRM_MBFURF_CLTA_CLTT_23816_265 : Added columns b.NISLEVELTERM -->
+   <!-- End:24/05/2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added columns NENRICHERAPPLC,NISJUMBOPRD,NMINSUSTAINPERIOD,NSUSTAINABILITYAPPL,NPRODTYPE -->
+<!-- End TRM_MBF_URF18729_224_P2 added column NISVARCOMMAPPL -->
+   <!-- End:15-09-2017:TRM_MBF_URF19496_225:Added NMULMEDDEDLMT, NMAXEAGEMULDEDOPT, STRPRODUNITGRP -->
+    <!--End:  07-Feb-2013:RaviB|CR 476|Introduce new feature with Advance Payment Applicable flag in prd_info_4 -->
+   <!--End:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group 2 -->
+   <!-- End:18-MAR-2015:CR458-TRM_MBF_CR458_160:SunilN:Added d.strprodlagrp -->
+  <!--End: CR-91|28/05/2012|Tracebility Code:TRM_MBF_91_00012|ravis|nacfFreq filed added --> 
+ <!-- End:21/06/2014|CR#393|yash|Policy Level Limit Handling|d.dmeddedlimit,d.dmedlifelimit added -->   
+   <!-- End:14/08/2014:Suresh Singh:TRM_MBF_CR406_0118_Drop1:CR406|Added new column NISPRODGSTAPPL -->
+<!--end:22-mar-2013:govinds|DM Defect 178|Made necessary changes to fetch the FD product flag from prd_info_4 -->
+   <!--End:Pranalee:10/10/11 : defect8323|CR365B|added for type of SA and SA in multiples of fields -->
+   <!--End : RajeshP : CR_380 : Code chanegs done to capture the Product Premium Group for sub standard cases  -->
+  <!--End:7/12/2011:vigneshA|256A|added NISCSVFACTORAPPL --> 
+<!--End:7/05/2011:vigneshA|3891|added nwopformcd for wop occupation formula field-->
+<!--  //start:13/05/2010:sonalb:1442|UAT|Reviewed By sonal|agged flag for TP age -->
+<!--End:14/12/2009:SIT 524:pritirs-->  
+<!-- End:29/May/2009:anupd:TRM_TKF_PRD_00011:modified query for allow si on sa,paid up rate and repay option-->
+      <!-- //start:12/05/2009:TRM_MBF_ILSR_00001:sonalb:CR11: client type -->
+      <!-- //End:01/02/2010:Sonalb:000|SIT|Reviewed By Sonal|add is commission pay on premium flag -->
+  <sql Id="AgeBasedTermSearch">
+   <query>
+          SELECT lminmaxentryageseq,strprodcd,nprodver,ntermfrom,
+          ntermto,nminentryagemale,nmaxentryagemale,nminentryagefemale,
+          nmaxentryagefemale,nlifeseq,strcreatedby,dtcreated,
+          strupdatedby,dtupdated,NCLIENTTYPE
+          FROM prd_minmax_eage
+          WHERE lminmaxentryageseq = ?
+   </query>
+   </sql>
+      <!-- //end:12/05/2009:TRM_MBF_ILSR_00001:sonalb:-->
+   <sql Id="AgeBasedTermSearchOnProduct">
+     <query>
+          SELECT lminmaxentryageseq FROM prd_minmax_eage
+          WHERE strprodcd LIKE ? AND nprodver LIKE ?
+          order by NCLIENTTYPE, nlifeseq,ntermfrom, ntermto, nminentryagemale,nmaxentryagemale,nminentryagefemale,
+          nmaxentryagefemale
+    </query>
+   </sql>
+   <sql Id="AgeBasedTermSequence">	
+    <query>
+	    SELECT prd_minmaxeage_seq.Nextval FROM dual
+    </query>
+   </sql>
+   <sql Id="IndexAgeSearch">
+	<query>
+ 	     SELECT strprodcd, nprodver,nagedifffrom,
+             nagediffto,strcreatedby,nvalueaddtolowage,dtcreated,
+             strupdatedby,dtupdated FROM prd_index_age 
+             WHERE lindexageseq = ?
+	</query>
+   </sql>
+   <sql Id="IndexAgeSearchOnProduct">
+	<query>
+ 	       SELECT lindexageseq FROM prd_index_age 
+             WHERE strprodcd = ? AND nprodver = ?
+	</query>
+   </sql>
+   <sql Id="IndexAgeSequence">
+	<query>
+ 	       SELECT prd_indexage_seq.Nextval FROM dual
+	</query>
+   </sql>
+   <sql Id="GetSystemDate">
+      <query>
+             SELECT Sysdate FROM dual
+      </query>     
+   </sql>
+ <!--Start:11/12/2007:MaybanPH1:anilg:<TaskID>:Added STRRIDERGROUPID
+                                                 for getting group value  for Id="ProductCombinationSearch"-->   
+   
+   <!-- Start:02-Jan-2018:TRM_MBF_URF20283_230:Added NISALLOWFORGIO -->                                                 
+   <sql Id="ProductCombinationSearch">
+	<query>SELECT a.strriderprodcd,a.nriderprodver,a.nexclmandatoryflg,a.nonwhom,a.nlifeseq,a.strcreatedby,a.dtcreated,
+		a.strupdatedby,a.dtupdated,a.lruleseq,b.strprodname ,a.STRRIDERGROUPID	
+		,a.NISALLOWFORGIO	
+		FROM prd_cmb a , prd_key_info b
+		WHERE a.strprodcd = ? AND a.nprodver = ?
+		  AND strriderprodcd = ? AND a.nriderprodver = ?
+		  AND b.strprodcd = a.strriderprodcd
+		  AND b.nprodver = a.nriderprodver
+	</query>
+   </sql>
+   <!-- End:02-Jan-2018:TRM_MBF_URF20283_230:Added NISALLOWFORGIO -->
+   
+ <!--Start:13/12/2007:MaybanPH1:anilg:<TaskID>:Added to search for Group search-->   
+   <sql Id="GroupSearch">
+	<query>SELECT STRRIDERGROUPID,
+	              LRULESEQ
+		   FROM   PRD_RIDERGRP_SA
+		   WHERE  strprodcd = ? 
+		   AND    nprodver = ?
+	</query>
+   </sql>
+  <!--Start:19/12/2007:MaybanPH1:anilg:<TaskID>:Added to get prm pmt type--> 
+   <sql Id="GetPrmPmtType">
+	<query>SELECT NPRMPMTTYPE
+	       FROM   PRD_INFO_4
+		   WHERE  STRPRODCD = ? 
+		   AND    NPRODVER = ?
+	</query>
+   </sql>  
+ <!--Start:13/12/2007:MaybanPH1:anilg:-->   
+ <!-- start:13/01/2010:sonalb:000|SIT|Reviewed By Sonal|Added order by -->
+   <sql Id="FindByProductBaseSearch">
+	<query>SELECT strprodcd,nprodver,strriderprodcd,nriderprodver FROM prd_cmb 
+		WHERE strprodcd = ? AND nprodver = ? 
+		order by strriderprodcd, nonwhom
+	</query>
+   </sql>
+    <!-- end:13/01/2010:sonalb:000|SIT|-->
+   <sql Id="RiderListSearch">
+	<query>SELECT a.strprodcd,a.nprodver,a.strprodname,a.NISTAKAFULPROD	
+		FROM prd_key_info a 
+		WHERE a.nprodtype != '1'
+		ORDER BY a.strprodcd ASC
+	</query>
+   </sql>
+   <sql Id="SearchConversion">
+	<query>SELECT lcnvdtlseq,strcnvprodcd,ncnvprodver,ncnvuptopolyears,ncnvmaxattage,
+                strupdatedby,dtupdated,strcreatedby,dtcreated,NCNVYRSBEFOREEXP
+		FROM prd_conv_dtl
+		WHERE strprodcd = ? AND nprodver = ?
+	</query>
+   </sql>
+   <!--Start:02/12/2009:SIT 286:prathameshs:modified order by-->
+    <!--Start:18/09/2007:MaybanPH1:anshult:<TaskID>:PRD_TermUptoMaturity-->
+   <sql Id="SearchTerm">
+	<query>SELECT ltrmdtlseq,nmaturitytype,ngendercd,ntermvalue,
+                strupdatedby,dtupdated,strcreatedby,dtcreated,NCLIENTTYPE 
+		FROM prd_mat_ageterm
+		WHERE strprodcd = ? AND nprodver = ?
+		--order by LTRMDTLSEQ 
+		ORDER BY NMATURITYTYPE,NTERMVALUE
+	</query>
+   </sql>
+   <!--End:02/12/2009:SIT 286:prathameshs-->
+   <!--End :18/09/2007:MaybanPH1:anshult-->
+   <sql Id="SearchRenewable">
+	<query>SELECT nisguaranrenewappl,nisuwreqd,nisrenewonce,nisatrenewappl,nrenewwithinperd,nrenewperdunit,
+		nmaxtermappl,nrenewmaxattage,nmaxexpiryage,strcreatedby,dtcreated,strupdatedby,dtupdated
+		FROM   prd_info_5
+		WHERE  strprodcd = ? AND  nprodver = ?
+
+	</query>
+   </sql>
+   
+   <!-- start:govinds:TRM_MBF_ECNURF_316_324_PH2 -->
+   <sql Id="SearchRevival">
+	<query>SELECT nmaxnbrofrevival,nmaxperdrevival,nrevivalperdunit,nmaxperdredate,nredateperdunit,
+		strupdatedby,dtupdated,strcreatedby,dtcreated,NMAXNBROFREVIVALREDATE,NREPARTWINDOWDAYS
+		FROM prd_info_5 
+		WHERE strprodcd = ? AND nprodver = ?
+	</query>
+   </sql>
+   <!-- end:govinds:TRM_MBF_ECNURF_316_324_PH2 -->
+   
+   <sql Id="Search_PRD_VAL_HDR">
+	<query>SELECT nvaluetype,ntblformlflg,strtblformlcd
+		FROM prd_val_hdr 
+		WHERE strprodcd = ? AND nprodver = ? AND nvaluetype = ?
+	</query>
+   </sql>
+   <sql Id="Select_PRD_VAL_HDR">
+	<query>SELECT nvaluetype,ntblformlflg,strtblformlcd,nformulaver
+		FROM prd_val_hdr 
+		WHERE strprodcd = ? AND nprodver = ?
+	</query>
+   </sql>
+   <!--Start Modified By Ramarao on 12/17/2007 -->
+   <!-- Start:19-Apr-19:Sweta:URF_23819 : Minimum Allocation Rates MAR CR Changes -->
+   <!--Start:25-04-2022 : Pranav :  TRM_MBF_ECNURF_162_P2 : Adding DPERC in Variable Premium Screen -->
+   <sql Id="VarSAPrmHdrSearch">
+      <query>
+	       SELECT LVSAPRMHDRSEQ,STRPRODCD,NPRODVER,
+             NSAPRMTYPE,NTBLFORMLFLG,STRTBLFORMLCD,
+             NVARONBASECUR,NVARIND,NISVAREVERYYEAR,
+             DVARRATE,STRCREATEDBY,DTCREATED,
+             STRUPDATEDBY,DTUPDATED,
+             DMAXVARSA,DMINVARSA,NVARPRMFREQ,DPERC
+             FROM PRD_VSA_PRM_HDR
+             WHERE LVSAPRMHDRSEQ = ?
+	 </query>     
+   </sql>
+   <!--End:25-04-2022 : Pranav :  TRM_MBF_ECNURF_162_P2 : Adding DPERC in Variable Premium Screen -->
+   <sql Id="VarSAPrmHdrSearchOnProduct">
+      <query>
+	       SELECT LVSAPRMHDRSEQ,STRPRODCD,NPRODVER,NSAPRMTYPE,
+             NTBLFORMLFLG,STRTBLFORMLCD,NVARONBASECUR,NVARIND,
+             NISVAREVERYYEAR,DVARRATE,STRCREATEDBY,DTCREATED,
+             STRUPDATEDBY,DTUPDATED,DMAXVARSA,DMINVARSA,NVARPRMFREQ
+             FROM PRD_VSA_PRM_HDR
+             WHERE strprodcd = ? AND nprodver = ? AND nsaprmtype = ?
+	  </query>     
+   </sql>
+<!--End:19-Apr-19:Sweta:URF_23819 : Minimum Allocation Rates MAR CR Changes -->
+   <sql Id="VarSAPrmHdrSeq">
+      <query>
+            SELECT PRD_VSAPRMHDR_SEQ.NEXTVAL FROM DUAL
+      </query>     
+   </sql>
+   <sql Id="VarSAPrmDtlSearch">
+      <query>
+             SELECT LVSAPRMDTLSEQ,LVSAPRMHDRSEQ,NTERMFROM,
+             NTERMTO,NENTRYAGEFROM,NENTRYAGETO,
+             NPOLYEARFROM,NPOLYEARTO,DVARRATE,
+             STRCREATEDBY,DTCREATED,STRUPDATEDBY,DTUPDATED
+             FROM PRD_VSA_PRM_DTL
+             WHERE LVSAPRMHDRSEQ = ?
+	  </query>     
+   </sql>
+   <sql Id="VarSAPrmDtlSeq">
+      <query>
+            SELECT PRD_VSAPRMDTL_SEQ.NEXTVAL FROM DUAL
+      </query>     
+   </sql>
+
+ <!-- Start:28-02-2022:by Pranav: Added nprmpmtyears and npolterm from and to: FSD_MaxiPro_Campaign_v1.1 -->
+   <sql Id="MinPrmSearch">
+      <query>
+           SELECT strprodcd,nprodver,npmtmode,strcurrcd,
+	   dminprmamnt,nisstaffpolicy,strcreatedby,dtcreated,strupdatedby,dtupdated,ngender,nprmpmtyearsfrom,nprmpmtyearsto,npoltermfrom,npoltermto 
+	   FROM prd_min_prm WHERE lminprmseq = ?
+      </query>     
+   </sql>
+    <!-- End:28-02-2022:by Pranav: Added nprmpmtyears and npolterm from and to: FSD_MaxiPro_Campaign_v1.1 -->
+ <!--End Modified By Ramarao on 12/17/2007 -->
+   <sql Id="MinPrmSearchOnProd">
+      <query>
+           SELECT lminprmseq
+	   FROM prd_min_prm WHERE strprodcd = ? AND nprodver = ?
+      </query>     
+   </sql>
+
+   <sql Id="PremiumBasisListSearch">
+	<query>SELECT nbasiscd,strtblcolumn,strdesc,nrangevalueapplflg
+		FROM  prd_prm_basis_m order by strdesc asc
+	</query>
+   </sql>
+   <sql Id="PremiumTableTypeNameSearch">
+	<query>SELECT strtblname FROM   prd_prmtbltyps WHERE  strprmtbltyp = ?
+	</query>
+   </sql>
+   <sql Id="PremiumTableTypeSearch">
+	<query>SELECT  strprmtbltyp,strdesc FROM  prd_prmtbltyps ORDER BY strprmtbltyp ASC
+	</query>
+   </sql>
+   <sql Id="PremiumTableTypeHdrListSearch">
+	<query>SELECT  pth.lprmtbltyphdrseq,pth.strtblcd,cpsm.strcddesc nbasis,pth.iunit,cpsm1.strcddesc npmtmode
+               FROM    prd_prmtbltyp_hdr pth, com_param_system_m cpsm,com_param_system_m cpsm1
+               WHERE   strprmtbltyp = ?
+               AND  cpsm.iparamtypecd = 1040
+               AND  pth.nbasis = cpsm.nparamcd
+	       AND  cpsm1.iparamtypecd = 5503
+               AND  pth.npmtmode = cpsm1.nparamcd
+	</query>
+   </sql>
+
+   <sql Id="PremiumTableTypeHdrSearch">
+	<query>SELECT  lprmtbltyphdrseq,strtblcd,nbasis,iunit,npmtmode,dtupdated,strupdatedby,
+		       dtcreated,strcreatedby,dtauth,strauthby,dtverified,strverifiedby	
+		FROM    prd_prmtbltyp_hdr
+		WHERE   strprmtbltyp = ? AND lprmtbltyphdrseq = ?
+	</query>
+   </sql>
+
+	<sql Id="PrmTbTypeHdrCompSearch">
+	<query>SELECT  lprmtbltyphdrseq,strtblcd,nbasis,iunit,npmtmode,dtupdated,strupdatedby,
+		       dtcreated,strcreatedby,dtauth,strauthby,dtverified,strverifiedby	
+		FROM    prd_prmtbltyp_hdr
+		WHERE   strprmtbltyp = ? AND strtblcd = ?
+	</query>
+   </sql>
+
+   <sql Id="PremiumRateCheck">
+	<query>SELECT  lprmtbltyphdrseq
+		FROM    prd_prmtbltyp_hdr
+		WHERE   strprmtbltyp = ? AND strtblcd = ?
+	</query>
+   </sql>
+   <sql Id="SearchPremiumType">
+	<query>SELECT  strdesc,strtblname,dtcreated,strcreatedby,dtupdated,strupdatedby
+		FROM    prd_prmtbltyps
+		WHERE   strprmtbltyp = ?
+	</query>
+   </sql>
+   <sql Id="SearchPremiumTypeColumns">
+	<query>select  colType.nbasiscd, colType.nrangevalueapplflg, colType.dtcreated, colType.strcreatedby,colType.dtupdated, colType.strupdatedby,basism.STRDESC, basism.STRTBLCOLUMN 
+		FROM    prd_prmtbltyp_cols colType, prd_prm_basis_m basism
+		WHERE   colType.nbasiscd = basism.nbasiscd and strprmtbltyp = ? 
+	</query>
+   </sql>
+
+   <sql Id="SearchLtdPremium">
+    <query>
+	  SELECT llmtpmtseq, strprodcd, nprodver, ntermfrom, ntermto, nprmterm, nprmpmtyears, strcreatedby, dtcreated, strupdatedby, dtupdated FROM prd_lmt_pmt_term WHERE llmtpmtseq = ?
+    </query>
+  </sql>
+  <sql Id="SearchLtdPremiumOnProduct">
+    <query>
+	  SELECT llmtpmtseq, strprodcd, nprodver, ntermfrom, ntermto, nprmterm, nprmpmtyears, strcreatedby, dtcreated, strupdatedby, dtupdated FROM prd_lmt_pmt_term WHERE strprodcd = ? AND nprodver = ?
+    </query>
+  </sql>
+  <sql Id="LtdPremiumSequence">
+    <query>
+      SELECT prd_lmtpmt_seq.nextval FROM dual
+    </query>
+  </sql>
+  <sql Id="SearchHealthExtra">
+    <query>
+	SELECT strprodcd,nprodver,nmortratefrom,nmortrateto,
+        dpercxtra,strcreatedby,dtcreated,strupdatedby,dtupdated  
+	FROM prd_health_extra 
+        WHERE lhealthxtraseq=?
+    </query>
+  </sql>
+
+  <sql Id="SearchHealthExtraOnProduct">
+    <query>
+	SELECT lhealthxtraseq
+	FROM prd_health_extra 
+        WHERE strprodcd = ? AND nprodver = ?
+    </query>
+  </sql>
+ <sql Id="SearchModalFactorOnProduct">
+    <query>
+           SELECT lmodalfactorseq
+           FROM prd_modal_factor WHERE  strprodcd = ? AND nprodver= ?
+    </query>
+  </sql>
+  <!-- TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-S -->
+  <sql Id="SearchModalFactor">
+    <query>
+           SELECT strprodcd,nprodver,npmtmode,npmtsourcecd,dmodalfactor,
+           dflatcharge,strcreatedby,dtcreated,strupdatedby,
+           dtupdated,IBASISUNIT,NFLEXAPPL
+           FROM prd_modal_factor WHERE lmodalfactorseq = ?
+    </query>
+  </sql>
+   <!-- TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-E -->
+ <sql Id="SAEAgeSearchOnProduct">
+	<query>
+        SELECT lminmaxsaeageseq FROM prd_minmax_sa
+        WHERE strprodcd = ? AND nprodver = ?	
+	</query>
+   </sql>
+  
+   <sql Id="SAEAgeSequence">
+	<query>
+ 	       SELECT prd_minmaxsa_seq.Nextval FROM dual
+	</query>
+   </sql>
+
+   <sql Id="SAEAgeSearch">
+	<query>
+ 	      SELECT lminmaxsaeageseq,strprodcd,nprodver,
+          neagefrommale,neagetomale,neagefromfemale,
+          neagetofemale,dminsa, dmaxsa,
+		  strcreatedby,dtcreated,strupdatedby,dtupdated
+          FROM prd_minmax_sa
+          WHERE lminmaxsaeageseq = ? order by lminmaxsaeageseq
+	</query>
+   </sql>
+   <sql Id="SearchCommHdrList">
+	<query>
+	        SELECT pch.lcommhdrseq,cpsm.strcddesc ncommtype,cpsm1.strcddesc ncommbase,pch.icommbaseunit,
+		pch.strcreatedby,pch.dtcreated,pch.strupdatedby,pch.dtupdated
+		FROM   prd_comm_hdr pch,com_param_system_m cpsm,com_param_system_m cpsm1
+		WHERE  strprodcd = ? AND nprodver  = ?
+		AND cpsm.iparamtypecd = 2505
+	        AND pch.ncommtype = cpsm.nparamcd
+		AND cpsm1.iparamtypecd = 2506
+	        AND pch.ncommbase = cpsm1.nparamcd
+	</query>
+   </sql>
+   <sql Id="SearchCommHdr">
+	<query>SELECT lcommhdrseq,ncommtype,ncommbase,icommbaseunit,
+		strcreatedby,dtcreated,strupdatedby,dtupdated
+		FROM   prd_comm_hdr
+		WHERE  lcommhdrseq = ? 
+	</query>
+   </sql>
+   <sql Id="SearchCommDtl">
+	<query>SELECT lcommdtlseq,nentryagefrom,nentryageto,ntermfrom,
+		ntermto,nnbroflivesfrom,nnbroflivesto,npolyearto,
+		npolyearfrom,dbasevaluefrom,dbasevalueto,dcommrate,
+		strcreatedby,dtcreated,strupdatedby,dtupdated
+		FROM   prd_comm_dtl
+		WHERE  lcommhdrseq = ? ORDER BY ntermfrom ASC
+	</query>
+   </sql>
+   <sql Id="SearchCommHdrSeq">
+	<query>SELECT prd_commhdr_seq.Nextval commhdrseq FROM   dual
+	</query>
+   </sql>
+   <sql Id="SearchReducedPrmOnProduct">
+     <query>
+       SELECT lreducedprmseq
+       FROM prd_reduced_prm
+       WHERE strprodcd = ? AND nprodver = ?	
+     </query>
+   </sql>
+   <sql Id="SearchReducedPremium">
+     <query>
+           SELECT strprodcd,nprodver,ntermfrom,ntermto,nagepolyearind,
+           nagepolyear,nflatrateind,drate,iunit,strcreatedby,dtcreated,
+	   strupdatedby,dtupdated 
+           FROM prd_reduced_prm
+           WHERE lreducedprmseq = ?
+     </query>
+   </sql>
+   <sql Id="SearchValTblHdr">
+     <query>
+           SELECT nvaluetype,nvaluebasis,
+           ivalueunit,strcreatedby,dtcreated,strupdatedby,dtupdated,
+	   dtauth,strauthby,dtverified,strverifiedby,NPOLYEARSINFORCE
+           FROM PRD_VAL_TBL_HDR
+           WHERE strtblcd = ?
+     </query>
+   </sql>
+   <sql Id="SearchValTblHdrAll">
+     <query>
+         SELECT pvth.strtblcd, cpsm1.strcddesc strvaluetype,pvth.nvaluetype, 
+	 pvth.strcreatedby,pvth.dtcreated,pvth.
+	 strupdatedby,pvth.dtupdated
+	 FROM prd_val_tbl_hdr pvth, com_param_system_m cpsm1
+         WHERE cpsm1.iparamtypecd = 1045
+         AND cpsm1.nparamcd = pvth.nvaluetype
+     </query>
+   </sql>
+   
+    <!--Columns added by garima suggested by dipti 27-12-07 
+   		NMATUPTOAGEFROM
+		NMATUPTOAGETO	
+		NMATUPTOTERMFROM	
+		NMATUPTOTERMTO	
+		NPRMPAYUPTOAGEFROM	
+		NPRMPAYUPTOAGETO	
+		NPRMPAYUPTOTERMFROM	
+		NPRMPAYUPTOTERMTO
+		-->
+<!-- Start:29/May/2009:anupd:TRM_TKF_PRD_00011:modified query for medical non medical indicator-->
+<!-- //start:08/01/2010:Sonalb:000|SIT|Reviewed By Sonal|added premium columns as part of Bijak Msia development -->
+ <!-- start 13/12/2011       3575|Day1+1|reviewed by kamlesh|add value basis and unit fields -->
+ <!-- Start:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+ <!-- Start 20-07-2016 | TRM_MBF_URF134246_206 |added Is Smoker column -->
+ <!-- Start:11-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added  NRATESCALEOPTION -->
+   <sql Id="SearchValTblDtl">
+     <query>
+           SELECT lvaltbldtlseq,ntermfrom,ntermto,nentryagefrom,nentryageto,
+           npolyearfrom,npolyearto,dvaluerate,ngendercd,dtefffrom,dteffto,strcreatedby,
+           dtcreated,
+            NMATUPTOAGEFROM,
+			NMATUPTOAGETO,	
+			NMATUPTOTERMFROM,	
+			NMATUPTOTERMTO,	
+			NPRMPAYUPTOAGEFROM,	
+			NPRMPAYUPTOAGETO,	
+			NPRMPAYUPTOTERMFROM,
+			NPRMPAYUPTOTERMTO,
+           strupdatedby,dtupdated,NMEDNONMEDIND, NPRMFROM, NPRMTO,NVALUEBASIS,IVALUEUNIT,DSAFROM,DSATO,NISSMOKER
+           ,NRATESCALEOPTION
+           FROM prd_val_tbl_dtl
+           WHERE strtblcd = ? 
+     </query>
+   </sql>
+   <!-- End:11-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added  NRATESCALEOPTION -->
+   <!-- End 20-07-2016 | TRM_MBF_URF134246_206 |added Is Smoker column -->
+ <!-- End:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+<!-- End:29/May/2009:anupd:TRM_TKF_PRD_00011:modified query for medical non medical indicator-->
+<!-- //start:08/01/2010:Sonalb:000|SIT| -->
+   <sql Id="GetDiscountTypes">
+     <query>SELECT ndisctype,ndtbasis FROM  com_discount_m
+     </query>
+   </sql>
+   <sql Id="DiscountHdrSearch">
+     <query>
+     		
+     		SELECT pdh.ldiscmapseq,cpsm3.strcddesc strdisctypen,pdh.ndisctype,pdh.nprio,cpsm.strcddesc strdiscappliedon,
+		   pdh.ndiscappliedon,pdh.nmaxdiscbasis,pdh.dmaxdiscrate,pdh.imaxdiscrateunit,cdt.ndtbasis,
+		   pdh.strcreatedby,pdh.dtcreated,pdh.strupdatedby,pdh.dtupdated,cpsm1.strcddesc strnbasis,pdh.nbasis,pdh.strdiscdesc
+		       FROM com_discount_m cdt,prd_discount_hdr pdh,com_param_system_m cpsm,
+	           com_param_system_m cpsm3,com_param_system_m cpsm1
+	    WHERE  pdh.strprodcd = ?
+	    AND  pdh.nprodver = ?
+	    AND cpsm.iparamtypecd = 1019
+	    AND pdh.ndiscappliedon = cpsm.nparamcd
+	    AND cpsm3.iparamtypecd = 1103
+	    And pdh.ndisctype = cpsm3.nparamcd
+            AND pdh.ndisctype=cdt.ndisctype
+            AND cpsm1.iparamtypecd=1105
+            AND pdh.nbasis=cpsm1.nparamcd
+	    
+
+            </query>
+   </sql>
+   <!-- Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to -->
+    <sql Id="DiscountDtlSearch">
+     <query>SELECT ldiscdtlseq,pdh.ntermfrom,pdh.ntermto,pdh.dcriteriarngfrom,
+            pdh.dcriteriarngto,pdh.drate,pdh.dmindisc,pdh.dmaxdisc,pdh.strcreatedby,
+            pdh.dtcreated,pdh.strupdatedby,pdh.dtupdated,pdh.NPOLYRINFORCEFM,pdh.NPOLYRINFORCETO,pdh.DBASISFRM ,
+            pdh.DBASISTO,cpsm.strcddesc strdiscbasis,pdh.NDISCBASIS,pdh.NUNIT,pdh.NAGEFRM,pdh.NAGETO,pdh.NGENDER,pdh.DTBASISFRM,pdh.DTBASISTO,
+            pdh.NPRMPAYTERMFROM,
+            pdh.NPRMPAYTERMTO
+	    FROM   prd_discount_dtl pdh,com_param_system_m cpsm 
+	    WHERE  ldiscmapseq = ?
+	    AND cpsm.iparamtypecd=1105
+            And cpsm.nparamcd=pdh.ndiscbasis
+	    ORDER BY ntermfrom, NPOLYRINFORCEFM ASC
+     </query>
+   </sql>
+   <!-- End|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to -->
+   <sql Id="DiscountHdrSeqSearch">
+     <query>SELECT pdh.strprodcd,pdh.nprodver,pdh.ndisctype,pdh.nprio,
+	    pdh.ndiscappliedon,pdh.ngenderappl,pdh.nstdsubsappl,
+	    pdh.nbasis,pdh.dmaxdiscrate,pdh.imaxdiscrateunit,
+	    cdt.ndtbasis,pdh.strcreatedby,pdh.dtcreated,pdh.strupdatedby,
+	    pdh.dtupdated,pdh.strdiscdesc
+	    FROM   COM_DISCOUNT_M cdt,prd_discount_hdr pdh
+	    WHERE  pdh.ldiscmapseq = ? AND  pdh.ndisctype = cdt.ndisctype
+     </query>
+   </sql>
+   <!-- Start : RajeshP : CR_380 : Code changes done to allow same discount type alonwith different Basis -->
+   <sql Id="DiscountHdrDuplicationSearch">
+     <query>SELECT ndisctype 
+            FROM prd_discount_hdr
+            WHERE strprodcd = ? AND nprodver = ? AND ndisctype = ? AND  nbasis=?
+     </query>
+   </sql>
+   <sql Id="DiscountHdrDuplicationUpdateSearch">
+     <query>SELECT ndisctype 
+            FROM prd_discount_hdr
+            WHERE strprodcd = ? AND nprodver = ? AND ndisctype = ?  AND ldiscmapseq != ?  AND  nbasis=?
+     </query>
+   </sql>
+   <!-- End : RajeshP : CR_380 : Code changes done to allow same discount type alonwith different Basis -->
+   <sql Id="DiscountCheckPriority">
+     <query>SELECT ndisctype 
+            FROM prd_discount_hdr
+     </query>
+   </sql>
+   <!--Start:22/01/2007:MaybanPH1:sonalb:<TaskID>:PRD_DISCOUNT:to allow user to select disc applied on 'tabular 'only , for 1st discount creation or min priority  -->
+   <sql Id="DiscountCheckDiscAppOn">
+     <query>SELECT min(nprio) prio
+            FROM prd_discount_hdr
+     </query>
+   </sql>
+   <!--End:22/01/2007:MaybanPH1:sonalb: -->
+   
+   <sql Id="GetMinMaxSaGender">
+     <query>SELECT Min(dminsa) min,Max(dmaxsa) max
+	    FROM   prd_minmax_sa
+	    WHERE  strprodcd = ? AND  nprodver  = ?
+     </query>
+   </sql>
+   <sql Id="GetMinMaxAgeMale">
+     <query>SELECT Min(neagefrommale) min,Max(neagetomale) max
+	    FROM   prd_minmax_sa 
+	    WHERE  strprodcd = ? AND  nprodver  = ?
+     </query>
+   </sql>
+    <sql Id="GetMinMaxAgeFemale">
+     <query>SELECT Min(neagefromfemale) min,Max(neagetofemale)max
+	    FROM   prd_minmax_sa pms
+	    WHERE  strprodcd = ? AND  nprodver  = ?
+     </query>
+   </sql>
+   <sql Id="GetMinMaxAgeGender">
+     <query>SELECT Min(Least(neagefrommale, neagefromfemale)) min,Max(Greatest(neagetomale, neagetofemale)) max
+	    FROM   prd_minmax_sa 
+	    WHERE  strprodcd = ? AND  nprodver  = ?
+     </query>
+   </sql>
+   <!-- Start:08/May/2008:MaybanPH1:Mandar Joshi:TRM_MBF_CLMIL_00003:Added code to capture NAV date option -->
+<!-- Start:29/May/2009:anupd:TRM_TKF_PRD_00011:modified query for recover periodic payment-->
+<!-- //start:02/06/2010:sonalb:1656|UAT|Reviewed by Sonal|added pmt factpr n mode for periodic pmt -->
+<!-- //Start: 5/7/2012 |Defect 6295 |dev1: fetched nisgcponpdup-->
+<!-- Start : RajeshP : CR_355 : Code changes done to include new Dropdown for GCP payble option -->
+<!-- Start:24Feb2015:Prod10772|To identity how many times Funeral expense to be paid. -->
+   <sql Id="SearchProductEvent">
+     <query>
+         SELECT pem.strprodcd,pem.nprodver,pem.neventtype,pem.ndoespoltermn,pem.ndoesprodtermn,
+         pem.nclienttype,pem.nlifeseq,pem.ndoesprmcease,pem.njointlifeapplicability,pem.dtcreated,pem.strcreatedby,pem.dtupdated,
+         pem.strupdatedby,cemp.dMaxAmntPay,pem.nnavdtoption,pem.NRECOVERPRDPMT, pem.DFACTOR, pem.NFREQUENCY,pem.nisgcponpdup,
+NGCPPAYOPTFRM,pem.NISFUPERLIFE	
+         FROM com_event_max_pay cemp,prd_event_map pem
+         WHERE pem.leventmapseq = ?
+         AND pem.neventtype = cemp.neventtype(+) 
+     </query>
+   </sql>
+<!-- End:24Feb2015:Prod10772|To identity how many times Funeral expense to be paid. -->
+   <!-- End : RajeshP : CR_355 : Code changes done to include new Dropdown for GCP payble option -->
+   <!-- //End: 5/7/2012 |Defect 6295 |dev1: fetched nisgcponpdup-->
+   <!-- End:29/May/2009:anupd:TRM_TKF_PRD_00011:modified query for recover periodic payment-->
+   <!-- End:08/May/2008:MaybanPH1:Mandar Joshi:TRM_MBF_CLMIL_00003:Added code to capture NAV date option -->
+   <!-- //End:02/06/2010:sonalb:1656|UAT|Reviewed by Sonal|added pmt factpr n mode for periodic pmt -->
+   <sql Id="SearchProductEventByEventType">
+     <query>
+            SELECT leventmapseq
+            FROM   prd_event_map
+            WHERE  neventtype = ?
+	    AND strprodcd = ? 
+	    AND nprodver= ?
+	    AND nclienttype = ?
+     </query>
+   </sql>
+   <sql Id="ListSearchProductEventOnProd">
+     <query>
+            SELECT pem.leventmapseq,pem.neventtype,cpsm.strcddesc,
+            pem.nclienttype,cpsm1.strcddesc strclienttype,pem.nlifeseq,pem.ndoespoltermn,pem.ndoesprodtermn,pem.ndoesprmcease,pem.njointlifeapplicability
+            FROM   prd_event_map pem,
+            com_param_system_m cpsm,
+	    com_param_system_m cpsm1
+            WHERE  pem.strprodcd  = ?
+            AND    pem.nprodver   = ?
+            AND    cpsm.iparamtypecd = 1021
+            AND    pem.neventtype = cpsm.nparamcd
+            AND    cpsm1.iparamtypecd = 1050
+            AND    pem.nclienttype = cpsm1.nparamcd
+	    ORDER BY cpsm.strcddesc,cpsm1.strcddesc ASC
+     </query>
+   </sql>
+<!-- //Start:28/04/2009:chandrashekharb:TRM_MBF_CLMCR_00041:Done changes for CR-69, Policy cancellation due to non disclosure -->
+<!-- 15/Oct/2009:Mandar Joshi:TRM_MBF_ANN_00014:Added column for Annuity Phase -->
+<!-- //start:17/JUN/2010:Sonalb:1632|UAT|Reviewed By Heena|moved Applicable ON field  from ben defn to event map -->
+<!-- Start:14-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added GAINDICATOR -->
+<!-- Start:03-DEC-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Setup Jumbo - Phase 2:Added not exists condition -->
+<!--Start:18-4-2022 | Pranav | Added for Waiting Period and Waiting Unit-->
+   <sql Id="SelectEventBenefitDetail">
+     <query>
+       SELECT leventmapseq,nbentype,nbenbasis,ibenunits,dbenrate,
+       nmaxinstt,nbenpmtfreq,nbenapplupto,nbenuptoyears,nisintappl,ninttype,
+       dintrate,nissubs,strschednbr,nafflnbenschedappl,strafflnschednbr,
+       dtcreated,strcreatedby,dtupdated,strupdatedby,NISCUSTOM, STRPRMTBLTYP,dflatamnt,nGrndOfEvent,nAnnPhase,NAPPLICABLEON	
+       ,GAINDICATOR,NWAITINGPRDUNIT,NWAITINGPRDVALUE
+       FROM   prd_event_ben_map pebm
+       WHERE  leventbenseq = ?     
+       AND NOT EXISTS( select null from prd_event_ben_map pebm1 where pebm.leventbenseq = pebm1.leventbenseq AND nbentype IN(76,93) AND NVL(nisfromnb,0)=2)
+      </query>
+   </sql>
+   <!--End:18-4-2022 | Pranav | Added for Waiting Period and Waiting Unit-->
+<!-- End:03-DEC-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Setup Jumbo - Phase 2:Added not exists condition -->
+<!-- End:14-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added GAINDICATOR -->
+<!-- //End:28/04/2009:chandrashekharb:TRM_MBF_CLMCR_00041:Done changes for CR-69, Policy cancellation due to non disclosure -->
+<!-- //End:17/JUN/2010:Sonalb:1632|UAT|Reviewed By Heena|moved Applicable ON field  from ben defn to event map -->
+<!-- Start:03-DEC-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Setup Jumbo - Phase 2:Added not exists condition -->
+   <sql Id="SearchEventBenefitDetails">
+     <query>
+         SELECT leventbenseq
+       FROM   prd_event_ben_map pebm
+         WHERE  leventmapseq = ?
+       AND  NOT EXISTS( select null from prd_event_ben_map pebm1 where pebm.leventbenseq = pebm1.leventbenseq AND nbentype IN(76,93) AND NVL(nisfromnb,0) = 2) 
+      </query>
+   </sql>
+<!-- End:03-DEC-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Setup Jumbo - Phase 2:Added not exists condition -->
+   <sql Id="SelectBenTpdb">
+     <query>
+       SELECT lbentpdbseq,ntermfrom,ntermto,neventagefrom,neventageto,
+       dbasevaluefrom,dbasevalueto,dbenrate,dtcreated,strcreatedby,
+       dtupdated,strupdatedby
+       FROM   prd_ben_tpdb
+       WHERE  leventbenseq = ?
+     </query>
+   </sql>
+<!--Start|20/10/2013|8342|Adding gender column in benifit definition screen -->
+<!--Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and Rate scale option columns  -->
+   <sql Id="SelectBenAgeYearTerm">
+     <query>
+       SELECT lageyrtermseq,ntermfrom,ntermto,neventagefrom,neventageto,
+       npolyearfrom,npolyearto,dbenrate,dtcreated,strcreatedby,
+       dtupdated,strupdatedby,ngendercd,NPRMPAYTERMFROM,NPRMPAYTERMTO,NRATESCALEOPTION,NEXPIRYAGE
+       FROM   prd_ben_ageyrterm
+       WHERE  leventbenseq = ?
+     </query>
+   </sql>
+   <!--End|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and Rate scale option columns  -->
+<!--End|20/10/2013|8342|Adding gender column in benifit definition screen -->
+   <!-- //Start:28/05/2009:chandrashekharb:TRM_MBF_CLMCR_00041:Done changes for CR-69, Policy cancellation due to non disclosure -->
+   <!-- Start:06-Dec-2018:TRM_URF_21454_56_57_241:Jumbo ILP P2-->
+   <sql Id="BenefitSearchEventDetails">
+     <query>
+      SELECT pebm.NISCUSTOM, pebm.STRPRMTBLTYP,pem.neventtype, cpsm1.strcddesc streventdesc, pebm.leventbenseq,
+      pebm.leventmapseq,pebm.nbentype, cpsm2.strcddesc strbendesc,
+      pebm.nbenbasis, cpsm3.strcddesc strbenbasis,pebm.ibenunits,pebm.
+      strschednbr,cpsm4.strcddesc nafflnbenschedappl,pebm.strafflnschednbr,
+      pem.nclienttype,pem.nlifeseq,
+      (SELECT LPRMTBLTYPHDRSEQ 
+	     FROM prd_prmtbltyp_hdr 
+	     WHERE STRPRMTBLTYP = pebm.STRPRMTBLTYP AND ROWNUM &lt; 2) LPRMTBLTYPHDRSEQ,
+	    (SELECT STRTBLCD 
+	     FROM prd_prmtbltyp_hdr 
+	     WHERE STRPRMTBLTYP = pebm.STRPRMTBLTYP AND ROWNUM &lt; 2) STRTBLCD,
+	     cpsm5.strcddesc nGrndOfEventdesc,
+	     Com_Get_Param_Desc_Fun(1,5586,pebm.NAPPLICABLEON) NAPPLICABLEON	
+      FROM   com_param_system_m cpsm1, com_param_system_m cpsm2,com_param_system_m cpsm3,
+      com_param_system_m cpsm4,prd_event_ben_map pebm, prd_event_map pem,com_param_system_m cpsm5
+      WHERE  cpsm1.iparamtypecd = 1021 
+      AND  cpsm2.iparamtypecd = 1022 
+      AND  cpsm3.iparamtypecd = 1023
+      AND  cpsm4.iparamtypecd = 1057
+      AND  cpsm5.iparamtypecd = 1128
+      AND  pem.leventmapseq = pebm.leventmapseq 
+      AND  pem.neventtype = cpsm1.nparamcd 
+      AND  pebm.nbentype  = cpsm2.nparamcd 
+      AND  pebm.nbenbasis = cpsm3.nparamcd
+      AND  pebm.nafflnbenschedappl = cpsm4.nparamcd
+      AND  pebm.nGrndOfEvent = cpsm5.nparamcd
+      and not exists( select null from prd_event_ben_map pebm1 
+      where pebm.leventbenseq = pebm1.leventbenseq and nbentype in(76,93) and nvl(nisfromnb,0) = 2)
+     </query>
+   </sql>
+   <!-- End:06-Dec-2018:TRM_URF_21454_56_57_241:Jumbo ILP P2 -->
+   <!-- //Start:28/05/2009:chandrashekharb:TRM_MBF_CLMCR_00041:Done changes for CR-69, Policy cancellation due to non disclosure -->
+   <sql Id="SelectEventTypeNotInProd">
+     <query>
+          SELECT cpsm.strcddesc,nparamcd
+          FROM   com_param_system_m cpsm
+          WHERE  cpsm.iparamtypecd = 1021
+          AND NOT EXISTS(
+             SELECT neventtype FROM prd_event_map pem
+             WHERE pem.neventtype = cpsm.nparamcd
+             AND pem.strprodcd = ?
+             AND pem.nprodver  = ?)
+     </query>
+   </sql>
+   <!-- Start:Myaban Ph1:garima:Removed Fields TO_CHAR(pabh.dtefffrom,'dd/mm/yyyy') dtefffrom,
+	       TO_CHAR(pabh.dteffto,'dd/mm/yyyy') dteffto, -->
+   <sql Id="SelectAllAfflnBenSchedHdr">
+     <query>
+        SELECT pabh.strafflnschednbr,
+	       pabh.dtcreated,pabh.strcreatedby,pabh.dtupdated,
+	       pabh.strupdatedby
+        FROM prd_affln_ben_hdr  pabh
+	ORDER BY pabh.strafflnschednbr ASC
+	</query>
+   </sql>
+    <!-- End:Myaban Ph1:garima:Removed Fields TO_CHAR(pabh.dtefffrom,'dd/mm/yyyy') dtefffrom,
+	       TO_CHAR(pabh.dteffto,'dd/mm/yyyy') dteffto, -->
+   <!-- Start:Myaban Ph1:garima:Removed Fields dtefffrom,dteffto -->
+   <sql Id="SelectAfflnBenSchedHdr">
+     <query>
+       SELECT nbenbasis,nismutexclv,dtcreated,dmaxpayperc,
+       strcreatedby,dtupdated,strupdatedby,strverifiedby,dtverified,strauthby,dtauth
+       FROM prd_affln_ben_hdr
+       WHERE strafflnschednbr = ?
+     </query>
+   </sql>
+   <!-- End:Myaban Ph1:garima:Removed Fields dtefffrom,dteffto -->
+    <!--Start:Myaban Ph1:garima:Added  Fields ,DMAXPERIOD,DMAXPERIODUNIT,DTEFFFROM,DTEFFTO -->
+
+<!-- Start:23/09/10/2009:TRM_MBF_CR196_00001:pritirs:changes for wop -->  
+<!-- Start:13-AUG-2014:CR411_P2:TRM_MBF_CR411_0106:BrijeshP:Added fields for Commencement within duration and Product Term-->
+<!--Start|20/04/2021|TRM_MBF_URF27389_311_P2|Protect 88 PH2|Added NDURATIONFROM and NDURATIONTO   -->
+ <sql Id="SelectAfflnBenSchedDtl">
+     <query>
+        SELECT lafflnbendtlseq,nafflntype,( SELECT strcddesc FROM com_param_system_m
+              WHERE iparamtypecd=1024 and nparamcd=nafflntype ) strafflndesc,nisnonexclv,nflatrateflg,drate,
+        iunit,nafflnfreq,nmaxinstt,NCLMPOLTERMN,NCLMPRODTERMN,
+        NCLMPRMCEASES,strschednbr,dtcreated,strcreatedby,dtupdated,strupdatedby,
+        DMAXBEN, NMAXELIGIBLEAGE, NSURVPERIOD, NCLAIMALLOWED, STRGRPCD,STRAFFLNGROUP,
+        NINDMNTYPE,NSTDPLAN,DFLATAMNT,NBENBASIS,NBENTIMES,NREDOTHERBEN,NANNLIMIT,
+        NPOLLIFELIMIT,NANNDEDLIMIT,NDEDLIMITPERDIS,NWAITINGPRD,DCORIPERC,DCOPAYPERC
+        ,DMAXPERIOD,DMAXPERIODUNIT,DTEFFFROM,DTEFFTO,NISWOPAPPL,
+        (select count(*) from PRD_AFFLN_BEN_REDN_DTL
+        where lafflnbendtlseq=pabd.lafflnbendtlseq
+         and strafflnschednbr=pabd.strafflnschednbr) redCount				        
+         ,DCOMMDURATION,DCOMMDURATIONUNIT,NPRODTERMN,NDURATIONFROM,NDURATIONTO				        
+        FROM prd_affln_ben_dtl	pabd 
+        WHERE strafflnschednbr = ?
+        ORDER BY nafflntype
+     </query>
+   </sql>
+<!--End|20/04/2021|TRM_MBF_URF27389_311_P2|Protect 88 PH2|Added NDURATIONFROM and NDURATIONTO   -->
+<!-- End:13-AUG-2014:CR411_P2:TRM_MBF_CR411_0106:BrijeshP:Added fields for Commencement within duration and Product Term-->
+<!-- End:23/09/10/2009:TRM_MBF_CR196_00001:pritirs -->
+ <!--Ens:Myaban Ph1:garima:Added  Fields ,DMAXPERIOD,DMAXPERIODUNIT,DTEFFFROM,DTEFFTO -->
+<!-- Start :RajeshP : 10-Apr-2012 : CR_306 : Changes for Periodic payments -->
+  <!--   <sql Id="SelectSchedDtl">
+     <query>
+       SELECT lscheddtlseq,npmtdoneafterdt,ninsttnbr,ntermfrom,
+       ntermto,nperd,nperdunit,drate,dtcreated,strcreatedby,
+       dtupdated,strupdatedby
+       FROM prd_sched_dtl
+       WHERE strschednbr = ?
+     </query>
+   </sql>-->
+
+   <sql Id="SelectSchedDtl">
+     <query>
+       SELECT lscheddtlseq,npmtdoneafterdt,ninsttnbr,ntermfrom,
+       ntermto,nperd,nperdunit,drate,dtcreated,strcreatedby,
+       dtupdated,strupdatedby,npmtmode,ndays
+       FROM prd_sched_dtl
+       WHERE strschednbr = ?
+     </query>
+   </sql>
+<!-- End :RajeshP : 10-Apr-2012 : CR_306 : Changes for Periodic payments -->
+   
+   <!--Start:02/01/2008:anilg :added NSCHTYPE,NSCHFREQ for  Id="SelectSchedHdr" -->
+ <!--09-07-2018 | Pawan Annuity Start here --> 
+   <!--Start:04-07-2023||Rohit#22||TRM_MBF_URF24268_FIN_LTB_PROV_349||Added NISLTB -->
+    <sql Id="SelectSchedHdr">
+     <query>
+       SELECT dtcreated,strcreatedby,dtupdated,strupdatedby,strverifiedby,
+       dtverified,strauthby,dtauth,NSCHTYPE,NSCHFREQ,NPERD,NPERDUNIT,NISLTB
+       FROM prd_sched_hdr
+       WHERE strschednbr = ?
+     </query>
+   </sql>
+    <!--End:04-07-2023||Rohit#22||TRM_MBF_URF24268_FIN_LTB_PROV_349||Added NISLTB -->
+ <!--09-07-2018 | Pawan Annuity End here --> 
+     <!--Start:29/01/2008:MaybanPH1:garima:<TaskID>: Modifeied query for schedule frequency null
+     SELECT DISTINCT strschednbr, a.strcddesc nschtype, b.strcddesc  nschfreq	
+       FROM prd_sched_hdr psh, com_param_system_m a , com_param_system_m b
+       WHERE psh.nschtype =a.nparamcd
+       AND  a.iparamtypecd='1125'
+       AND psh.nschfreq =b.nparamcd
+       AND  b.iparamtypecd='5503'
+            ORDER BY strschednbr ASC-->
+   <!--Start:11/01/2008:MaybanPH1:tanujam:<TaskID>: Added New Fields-->
+  
+    <!--Start:04-07-2023||Rohit#22||TRM_MBF_URF24268_FIN_LTB_PROV_349||Added NISLTB-->
+   <sql Id="SelectAllSchedDtl">
+     <query>
+         SELECT DISTINCT strschednbr,a.strcddesc nschtype, b.strcddesc  nschfreq, c.strcddesc NISLTB
+         FROM prd_sched_hdr psh, com_param_system_m a , com_param_system_m b,com_param_system_m c
+       WHERE psh.nschtype =a.nparamcd
+       AND  a.iparamtypecd=1125
+      AND psh.nschfreq =b.nparamcd(+)
+       AND  b.iparamtypecd(+)=5503
+         and c.iparamtypecd=5501
+         and c.nparamcd = NVL(psh.NISLTB,0)
+            ORDER BY strschednbr ASC  
+     </query>
+   </sql>
+    <!--End:04-07-2023||Rohit#22||TRM_MBF_URF24268_FIN_LTB_PROV_349||Added NISLTB-->
+     <!--End:11/01/2008:MaybanPH1:tanujam:<TaskID>: -->
+     <!--Start:29/01/2008:MaybanPH1:garima:<TaskID>: Modifeied query for schedule frequency null-->
+       <!-- start:26/03/2009:sonalb:TRM_MBF_ILSW_00001 : renamed columns -->
+       <!--START:18-05-2009:TRM_MBF_ILSR_00024:avinashss:Query modified to get Percentage   -->
+       <!--  // start:23/JUN/2010:sonalb:1959|UAT|Reviewed By Heena|Added GMMV Ratio  -->
+      <!-- Start:CR-340|Tracebility Code :TRM_MBF_340_0047|ravis|6-2-2013|added for cash Payout -->  
+   	 <!--Start:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added NISNLGAPPL,NYEARSOFNLG,NISNOTIONAL Elite Investment product-->
+   	 <!--Start 19/06/2015 : Pawan : URF 12862 :Added NTYPETOPUP,NTOPUPPRMMULTOF-->
+     <!--Start:30-Aug-2018:SantoshK : TRM_URF_21454_56_57_241_P2:Jumbo P2:Added NREDUCINGSAMONTH :Reducing SA Month in withdrawal part.-->
+	 <!--TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-S-->
+   <sql Id="SelectInvestmentLink">
+     <query>
+        SELECT nallowpartwithd,nallowswitch,nallowtopup,nallowchangesaprm,nissaimpactwithd,
+	dminwithdamntallow,dminbalafterwithd,nissaimpacttopup,dmintopupamnt,nnbroffreeswitch,
+	nswitchyearlife,nswitchyearunit,dminfundsizeswitch,dminswitchamnt,ntypeofchange,
+	nisoptional,naffectssaprm,dtcreated,strcreatedby,dtupdated,strupdatedby,dtopuprate,ntopupbasis,ntopupcriteria
+	,ninternalfundrider,strcoitblcd,strinvesthdrtblcd,DWITHDRATE,	
+       NWITHDBASIS	,
+      NWITHDCRITERIA	,
+        nAllocAfterDays , nprmmultiple, dmaxpremium, ncoicalctype, strcoiformulacd, ngmmv, 
+        ngmsv, NMINSWITCHBALTYPE , nloyaltybonusapplc,NMINSWITCHAMTTYPE ,DMINFUNDSIZESWITCH,DGMMVPERC , DRATIOGMMV,NDISTRIBUTEMTHD,NSHROTFALLOPT,
+        NISNLGAPPL,NYEARSOFNLG,NISNOTIONAL,NTYPETOPUP,NTOPUPPRMMULTOF,NREDUCINGSAMONTH,NAUTOTOPUPAPPLC
+        FROM prd_invest_link_m
+        WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+    <!--TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-E-->
+   <!--End:30-Aug-2018:SantoshK : TRM_URF_21454_56_57_241_P2:Jumbo P2:Added NREDUCINGSAMONTH :Reducing SA Month in withdrawal part.-->
+   <!--End 19/06/2015 : Pawan : URF 12862 :Added NTYPETOPUP,NTOPUPPRMMULTOF-->
+<!--End:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added NISNLGAPPL,NYEARSOFNLG,NISNOTIONAL Elite Investment product-->
+   <!-- End:CR-340|Tracebility Code :TRM_MBF_340_0047|ravis|6-2-2013|added for cash Payout -->  
+   	<!--END:18-05-2009:TRM_MBF_ILSR_00024:avinashss -->
+     <!-- end:26/03/2009:sonalb:TRM_MBF_ILSW_00001 : renamed columns -->
+     <!-- Start: 23-May-2017 : Swati : TRM_MBF_URF137915_220 :  Mega ILP Phase 1 Sprint 1 -->
+   <sql Id="SelectAllocRate">
+     <query>
+        SELECT strprodcd,nprodver,ntermfrom,ntermto,NPOLYRFROM,npolyrto,nisstaff,
+        dallocrate,strgrpschemecd,dtcreated,strcreatedby,dtupdated,strupdatedby
+        ,nprmtermfrom,nprmtermto
+        FROM prd_alloc_rates
+        WHERE lallocrateseq = ?
+     </query>
+   </sql>
+   <!-- End: 23-May-2017 : Swati : TRM_MBF_URF137915_220 :  Mega ILP Phase 1 Sprint 1 -->
+      <sql Id="SearchAllocRateByProd">
+     <query>
+       SELECT lallocrateseq
+       FROM prd_alloc_rates
+       WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <!-- //Start:23/06/2009:internal:viniths:Added NFUNDCATG in the select clause-->
+      <sql Id="SelectFundMap">
+     <query>
+         SELECT strprodcd,nprodver,strfundcd,dminallocperc,dminincrementperc,
+         dtcreated,strcreatedby,dtupdated,strupdatedby, NFUNDCATG
+         FROM prd_prod_fund_map
+         WHERE lprodfundmapseq= ?
+     </query>
+   </sql>
+      <!-- //End:23/06/2009:internal:viniths:Added NFUNDCATG in the select clause-->
+    <!-- Start:31/10/2007:MaybanPH1:anshult:<TaskID>:PRD_AllocationRules -->
+     <!-- Start:20/12/2007:MaybanPH1:anilg:<TaskID>:added NPRMPMTTYPE for Id="SelectRulesAllocation"-->
+     <!-- Start:29/12/2007:MaybanPH1:anilg:<TaskID>:added NADVPRMAPPLD for Id="SelectRulesAllocation"-->
+     <!-- START:16-5-2009:TRM_MBF_ILSR_00005:avinashss:Query Modified as per new table structure -->
+     	<!-- START:21/5/2009:<TRM_MBF_ILSR_00005><DefectId-741>:avinashss:Record fetched using prodcd and prodver instead of hdrseq -->
+   <!-- Start:14-Aug-2019:URF_25231_283:Sustainability Changes:added NISSUSTPRMAPPLC column -->	    	
+   <sql Id="SelectRulesAllocation">
+     <query>
+         SELECT pia.LPRODALLOCATIONRULESSEQ,pia.strprodcd,pia.nprodver,pia.NRISKCHGFREQ,
+         pia.dtcreated,pia.strcreatedby,pia.dtupdated,pia.strupdatedby,pia.NPRMPMTTYPE,pia.NADVPRMAPPLD,pia.NCHGDEDNMETHD,
+         pia.NPRMHOLIDAYAPPLD,pia.NXPRMMETHOD,pia.NBIDOFFERCHGAPPLC,pia.NADMNCHGAPPLC,pia.NADMINCHGFREQ,pia.NADMINCHGDEDMTHD,
+         pia.NINITCHGAPPL,pia.NINITCHGDEDMTHD,pia.NINITCHGFREQ	
+         FROM prd_invest_alloc pia
+         WHERE pia.strprodcd = ?
+         AND   pia.nprodver= ?  
+      </query>
+   </sql>
+     <!-- End:14-Aug-2019:URF_25231_283:Sustainability Changes:added NISSUSTPRMAPPLC column -->	
+   		<!-- END:21/5/2009:<TRM_MBF_ILSR_00005><DefectId-741>:avinashss-->
+    <sql Id="SearchRulesDtlsAllocation">
+     <query>
+         SELECT piad.NCOMPONENT,piad.NOPERATOR,piad.LPRDALLOCCOMPSEQ 	
+         FROM prd_invest_alloc pia,prd_invest_alloc_dtl piad
+         WHERE pia.LPRODALLOCATIONRULESSEQ= ?  
+         AND pia.LPRODALLOCATIONRULESSEQ=piad.LPRODALLOCATIONRULESSEQ 
+         order by piad.LPRDALLOCCOMPSEQ
+     </query>
+   </sql>
+   
+    <!--END:16-5-2009:TRM_MBF_ILSR_00005:avinashss -->
+    <!--End :18/09/2007:MaybanPH1:anshult -->
+   <sql Id="SelectFundMapOnProduct">
+     <query>
+        SELECT lprodfundmapseq
+        FROM prd_prod_fund_map
+        WHERE strprodcd = ? AND nprodver = ?     
+     </query>
+   </sql>
+    <!-- Start:31/10/2007:MaybanPH1:anshult:<TaskID>:PRD_AllocationRules -->
+   <sql Id="SelectRulesAllocationOnProduct">
+     <query>
+        SELECT lprodallocationrulesseq
+        FROM prd_invest_alloc
+        WHERE strprodcd = ? AND nprodver = ?     
+     </query>
+   </sql>
+    <!--End :18/09/2007:MaybanPH1:anshult -->
+   <sql Id="SelectFundName">
+     <query>
+         SELECT strfundcd,strfundname
+	 FROM com_fund_info_m
+     </query>
+   </sql>
+   
+   <sql Id="SelectHealthCare">
+     <query>
+         SELECT nindvlfamilyflg,nchilduptoage,nmaxstudychildage,
+         dtcreated,strcreatedby,dtupdated,strupdatedby
+         FROM prd_healthcare_m
+         WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="SearchSinglePremium">
+     <query>
+        SELECT strprodcd,nprodver,ntermfrom,
+        ntermto, nmaxinstt, imaxperdalow, nmaxperdunit,dmodalfactor	, dtcreated,
+        strcreatedby, dtupdated, strupdatedby
+        FROM prd_term_sp_instt
+        WHERE ltermspinsttseq = ?
+     </query>
+   </sql>
+   <sql Id="SearchSinglePremiumOnProd">
+     <query>
+       SELECT ltermspinsttseq
+       FROM prd_term_sp_instt
+       WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="SearchProductPrmMapOnProd">
+     <query>
+       SELECT lprmtbltypdefnseq  FROM prd_prmtbltyp_defn
+       WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <!--Start Modified By Deena Paul Ambooken on 31/12/2007 -->
+   <!-- Start:27/11/2009:Internal:pritirs:Captured formula version -->
+   <!--Start:CR-365B|Tracebility No.:TRM_MBF_CR365B_0070|ravis|25-07-2013|added for CR-365B  LNPRMTBLTYPHDRSEQ-->
+   <!-- Start : RajeshP : CR_395 : Code Changes done to include new Norional Extra Premium Dropdown. -->
+ 	<!-- Start |11-09-2015 |TRM_MBF_URF129419_174 | added new feilds DTEFFFROM,DTEFFTO,lprmtbltypdefnseq -->
+ 	<!--Start:17/6/2017:Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1|added new field nntblformlflg,strnformlcd,NNFORMULAVER,strnformuladesc for notional premium -->
+ 	<!-- Start TRM_MBF_URF19496_225 -->
+ 	<!-- Start TRM_MBFURF_CLTA_CLTT_23816_265_Enhenecment -->
+	<sql Id="SearchProductPrmMap">
+     <query>
+        SELECT strprodcd,nprodver,ntblformlflg,strformlcd,lprmtbltyphdrseq,
+        nfemalesetbackage,nmalesetbackage,stroetype,dtcreated,strcreatedby,
+	dtupdated,strupdatedby,npremroundbasis,strextraprmtblcd,NJNTLFEFCTTBLCD,NFORMULAVER,com_get_formula_desc(strformlcd,NFORMULAVER) strformuladesc,
+	nRSATblFormlFlg, STRRSATBLCD,LNPRMTBLTYPHDRSEQ,STRNEXTRAPRMTBLCD,DTEFFFROM,DTEFFTO,lprmtbltypdefnseq,nntblformlflg,strnformlcd,NNFORMULAVER,com_get_formula_desc( strnformlcd,nnformulaver) strnformuladesc
+	,STRCOITBLCD,NAUTOOCCEXTRA
+        FROM prd_prmtbltyp_defn 
+       WHERE lprmtbltypdefnseq = ?
+     </query>
+   </sql>
+   <!-- End TRM_MBFURF_CLTA_CLTT_23816_265_Enhenecment -->
+   <!-- End TRM_MBF_URF19496_225 -->
+	<!-- End |11-09-2015 |TRM_MBF_URF129419_174 | added new feilds DTEFFFROM,DTEFFTO,lprmtbltypdefnseq -->
+   <!-- End: RajeshP : CR_395 : Code Changes done to include new Norional Extra Premium Dropdown. -->
+   <!--End:CR-365B|Tracebility No.:TRM_MBF_CR365B_0070|ravis|25-07-2013|added for CR-365B  LNPRMTBLTYPHDRSEQ-->
+   <!-- End:27/11/2009:Internal:pritirs -->
+   <!--End Modified By Deena Paul Ambooken on 31/12/2007 -->
+   <sql Id="SearchPremiumDesc">
+     <query>
+        SELECT pp.strprmtbltyp,pph.strtblcd,pp.strdesc,pph.lprmtbltyphdrseq
+        FROM prd_prmtbltyps pp,prd_prmtbltyp_hdr pph
+        WHERE pph.strprmtbltyp = pp.strprmtbltyp
+	AND pph.strauthby IS NOT null ORDER BY pp.strprmtbltyp ASC
+     </query>
+   </sql>
+   <sql Id="SearchOETypes">
+     <query>
+        SELECT stroetype
+        FROM prd_occup_xtra_m
+        WHERE strauthby IS NOT null
+     </query>
+   </sql>
+   <sql Id="SearchExtraPremiumTableCode">
+     <query>
+        select STREXTRAPRMTBLCD 
+        from PRD_EXTRPRM_HDR 
+        where STRAUTHBY IS NOT NULL 
+        ORDER BY STREXTRAPRMTBLCD
+     </query>
+   </sql>
+   <sql Id="PrdStatusSearchPK">
+     <query>
+       SELECT strprodcd,nprodver,nfunctionality
+       FROM prd_authorization
+       WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="PrdStatusSearch">
+     <query>
+       SELECT pa.strprodcd strprodcd,pa.nprodver nprodver,pa.nstatcd nstatcd,pa.nfunctionality nfunctionality,
+              pa.dtcreated dtcreated,pa.strcreatedby strcreatedby,
+	      pa.dtupdated dtupdated,pa.strupdatedby strupdatedby,
+	      cpsm1.strcddesc strfunctionality
+	FROM   com_param_system_m cpsm1,
+	       prd_authorization pa
+        WHERE  pa.strprodcd = ? AND pa.nprodver = ? AND pa.nfunctionality = ?
+	AND    cpsm1.iparamtypecd = 1048
+        AND    pa.nfunctionality = cpsm1.nparamcd
+       </query>
+   </sql>
+   
+  <!-- Start:gauravpd:08/05/2009:order by added for strschednbr and strafflnschednbr-->
+  
+   <sql Id="SearchPmtSchedNbrs">
+     <query>
+          SELECT strschednbr
+	  FROM prd_sched_hdr
+	  WHERE strauthby IS NOT NULL
+	  ORDER by strschednbr
+      </query>
+   </sql>
+ 
+   <sql Id="SearchAfflnBenSchedNbrs">
+     <query>
+          SELECT strafflnschednbr 
+	  FROM prd_affln_ben_hdr
+	  WHERE strauthby IS NOT NULL
+	  ORDER by strafflnschednbr
+      </query>
+   </sql>
+   
+   <!-- End:gauravpd:08/05/2009 -->
+   
+   <sql Id="SearchRiderRules">
+     <query>
+          SELECT lruleseq,nriderbasis 
+	  FROM   prd_rules 
+	  WHERE  lruleseq = ?
+      </query>
+   </sql>
+
+<!--Start:18/12/2007:MaybanPH1:anilg:<TaskID>:Added DMINVALUE,DMAXVALUE  Id="SelectRiderRule"-->   
+   <sql Id="SelectRiderRule">
+     <query>
+          SELECT noperator1,dvalue,noperator2,nplanbasis,dtcreated,
+	         strcreatedby,dtupdated,strupdatedby,DMINVALUE,DMAXVALUE 
+	  FROM   prd_rules 
+	  WHERE  lruleseq = ? AND nriderbasis = ?
+      </query>
+   </sql>
+   <!--  //start:17/06/2009:MT-defect id 2129:sonalb:modified query-->
+   <sql Id="Search_PRD_Conversion">
+     <query>
+          SELECT strprodcd,nprodver,strprodname
+	  FROM   prd_key_info
+	  WHERE nprodstat in (?,?)
+	  AND dtefffrom &lt;= ?	 
+	 
+      </query>
+   </sql>
+   <!--  //end:17/06/2009:MT-defect id 2129:sonalb:-->
+   <!--Start:01/07/2009:Defect-2633|IT| shweta:Ascending order for Table Codes-->
+   <sql Id="SelectTableCodes">
+     <query>
+          SELECT strtblcd
+	  FROM   prd_val_tbl_hdr
+	  WHERE nvaluetype = ?
+	  AND strauthby IS NOT null
+	  order by strtblcd asc
+     </query>
+   </sql>
+     <!--End:01/07/2009:Defect-2633|IT| shweta:Ascending order for Table Codes-->
+   <sql Id="SelectAfflnTypeList">
+     <query>
+           SELECT nparamcd,strcddesc 
+	   FROM com_param_system_m
+           WHERE iparamtypecd=1024
+           order by nparamcd
+     </query>
+   </sql>
+   <sql Id="SelectAfflnGrpList">
+     <query>
+           SELECT STRGRPCD, DMAXGRPAMNT, DMAXGRPPERC, STRDESC 
+           FROM  PRD_AFFLN_GRP_MAP
+     </query>
+   </sql>
+   <!-- Start:prathameshs:22-06-2009:TRM_TKF_PRD_00004:client type check is added -->
+   <sql Id="GetProdMinMaxAge">
+	<query>
+		SELECT Min(Nvl(nminentryagemale, 0)) nminentryagemale, 
+			   Max(Nvl(nmaxentryagemale, 0)) nmaxentryagemale,
+			   Min(Nvl(nminentryagefemale, 0)) nminentryagefemale,
+			   Max(Nvl(nmaxentryagefemale, 0)) nmaxentryagefemale
+		FROM   PRD_MINMAX_EAGE
+		WHERE STRPRODCD = ? AND NPRODVER=?	
+		AND   NCLIENTTYPE = 2
+	</query>
+   </sql>
+   <!-- End:prathameshs:22-06-2009:TRM_TKF_PRD_00004 -->
+   <sql Id="OccupationExtraClassSearch">
+     <query>
+           SELECT strparamcd,strcddesc 
+	   FROM com_param_user_m 
+	   WHERE iparamtypecd = 5511
+     </query>
+   </sql>
+   <sql Id="OccupationExtraCodesSearch">
+     <query>
+           SELECT stroccupcd,stroccupname,STROCCUPCLASS
+            FROM com_occupation_m
+     </query>
+   </sql>
+   <sql Id="OccupationExtraDtlClassSearch">
+     <query>
+           SELECT poxd.stroccupclasscd,poxd.nflatrateind,poxd.nprmbasis,poxd.iprmunit,poxd.dprmrate,poxd.dtcreated,
+	   poxd.strcreatedby,poxd.dtupdated,poxd.strupdatedby,cpum.strcddesc description
+            FROM prd_occup_xtra_dtl poxd,com_param_user_m cpum
+            WHERE poxd.stroetype = ?
+	    AND cpum.iparamtypecd = 5511
+	    AND cpum.strparamcd = poxd.stroccupclasscd
+     </query>
+   </sql>
+   <sql Id="OccupationExtraDtlCodeSearch">
+     <query>
+           SELECT poxd.stroccupclasscd,poxd.nflatrateind,poxd.nprmbasis,poxd.iprmunit,poxd.dprmrate,poxd.dtcreated,
+	   poxd.strcreatedby,poxd.dtupdated,poxd.strupdatedby,com.stroccupname description
+            FROM prd_occup_xtra_dtl poxd,com_occupation_m com
+            WHERE poxd.stroetype = ?
+	    AND poxd.stroccupclasscd = com.stroccupcd
+	    
+     </query>
+   </sql>
+   <sql Id="OccupationExtraHdrSearch">
+     <query>
+           SELECT noeind,strdesc,dtcreated,strcreatedby,dtupdated,strupdatedby,strverifiedby,
+            dtverified,strauthby,dtauth
+            FROM prd_occup_xtra_m
+            WHERE stroetype = ?
+     </query>
+   </sql>
+    <sql Id="OccupationExtraSearchOETypes">
+     <query>
+           SELECT stroetype,strdesc
+            FROM prd_occup_xtra_m
+	    ORDER BY stroetype,strdesc ASC
+     </query>
+   </sql>
+   <sql Id="OccupationExtraTypeSearch">
+     <query>
+           SELECT stroetype
+            FROM prd_occup_xtra_m
+	    WHERE stroetype = ?
+     </query>
+   </sql>
+   <sql Id="CountDiscount">
+     <query>
+           SELECT count(*)
+            FROM prd_discount_dtl
+	    WHERE ldiscmapseq IN 
+	    (SELECT ldiscmapseq FROM prd_discount_hdr WHERE
+	    strprodcd = ? AND nprodver = ?)
+     </query>
+   </sql>
+   <sql Id="CountCommission">
+     <query>
+           SELECT count(*)
+            FROM prd_comm_dtl
+	    WHERE lcommhdrseq IN 
+	    (SELECT lcommhdrseq FROM prd_comm_hdr WHERE
+	    strprodcd = ? AND nprodver = ?)
+     </query>
+   </sql>
+   <sql Id="CountHealthExtra">
+     <query>
+           SELECT count(*)
+            FROM prd_health_extra
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountModalFactor">
+     <query>
+           SELECT count(*)
+            FROM prd_modal_factor
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+  <!-- start garima for new functionality in copy --> 
+   <sql Id="CountMinPrm">
+     <query>
+           SELECT count(*)
+            FROM PRD_MIN_PRM
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountVSA">
+     <query>
+           SELECT count(*)
+            FROM PRD_VSA_PRM_DTL
+	    WHERE LVSAPRMHDRSEQ	 IN 
+	    (SELECT LVSAPRMHDRSEQ FROM PRD_VSA_PRM_HDR WHERE
+	    strprodcd = ? AND nprodver = ?)
+     </query>
+   </sql>
+    <sql Id="CountIndexAge">
+     <query>
+           SELECT count(*)
+            FROM PRD_INDEX_AGE
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountEntryAge">
+     <query>
+           SELECT count(*)
+            FROM PRD_MINMAX_EAGE
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountMinMaxSA">
+     <query>
+           SELECT count(*)
+            FROM PRD_MINMAX_SA
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountRedPrm">
+     <query>
+           SELECT count(*)
+            FROM PRD_REDUCED_PRM
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountEvent">
+     <query>
+           SELECT count(*)
+            FROM PRD_EVENT_BEN_MAP
+	    WHERE LEVENTMAPSEQ	 IN 
+	    (SELECT LEVENTMAPSEQ FROM PRD_EVENT_MAP WHERE
+	    strprodcd = ? AND nprodver = ?)
+     </query>
+   </sql>
+  <!-- start:06/03/08:MaybanPH1:sonalb:PRD_Data_Entry_Check:added to chec whether data is entered or not -->
+   <sql Id="CountPrdAppl4">
+     <query>
+           SELECT count(*)
+            FROM PRD_INFO_1 pi1,
+            	 PRD_INFO_2 pi2,
+            	 PRD_INFO_3 pi3,
+            	 PRD_INFO_4 pi4
+	    WHERE pi1.strprodcd = ? AND pi1.nprodver = ?  
+	    AND   pi2.strprodcd = ? AND pi2.nprodver = ?
+	    AND   pi3.strprodcd = ? AND pi3.nprodver = ?
+	    AND   pi4.strprodcd = ? AND pi4.nprodver = ?
+	    
+	    	
+     </query>
+   </sql>
+   
+   <sql Id="CountEventDefn">
+     <query>
+           SELECT count(*)
+            FROM PRD_EVENT_MAP
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <!-- start:06/03/08:MaybanPH1:sonalb:PRD_Data_Entry_Check:added to chec whether data is entered or not -->
+   <sql Id="CountAnnuity">
+     <query>
+           SELECT count(*)
+            FROM PRD_ANNUITY
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountWaiver">
+     <query>
+           SELECT count(*)
+            FROM PRD_WAIVER_BENEFIT
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountTermMaturity">
+     <query>
+           SELECT count(*)
+            FROM prd_mat_ageterm
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountRestOcc">
+     <query>
+           SELECT count(*)
+            FROM PRD_OCC_REST
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountLtdPrm">
+     <query>
+           SELECT count(*)
+            FROM PRD_LMT_PMT_TERM
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountSinglePrm">
+     <query>
+           SELECT count(*)
+            FROM PRD_TERM_SP_INSTT
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountCombination">
+     <query>
+           SELECT count(*)
+            FROM PRD_CMB
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountInvLink">
+     <query>
+           SELECT count(*)
+            FROM PRD_INVEST_LINK_M
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountInvLinkAlloc">
+     <query>
+           SELECT count(*)
+            FROM PRD_INVEST_ALLOC
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountPrmDefn">
+     <query>
+           SELECT count(*)
+            FROM PRD_PRMTBLTYP_DEFN
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountThirdParty">
+     <query>
+           SELECT count(*)
+            FROM PRD_THIRDPARTY_RELATIONS
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+    <sql Id="CountPrdAppl">
+     <query>
+           SELECT count(*)
+            FROM PRD_INFO_1
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+    <sql Id="CountPrdDefn">
+     <query>
+           SELECT count(*)
+            FROM PRD_KEY_INFO
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+    <sql Id="CountHealthCare">
+     <query>
+           SELECT count(*)
+            FROM PRD_HEALTHCARE_M
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountRevivalConversion">
+     <query>
+           SELECT count(*)
+            FROM PRD_INFO_5
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountBenifitDefinition">
+     <query>
+            SELECT count(*) FROM prd_ben_ageyrterm
+       WHERE  leventbenseq IN (SELECT leventbenseq
+                               FROM   prd_event_ben_map
+							   WHERE leventmapseq IN (SELECT leventmapseq 
+													  FROM   prd_event_map
+													  WHERE  strprodcd = pi_copy_to_product_code
+													  AND    nprodver  = pi_copy_to_product_version)) 
+     </query>
+   </sql>
+   
+   <sql Id="CountInvLnkFundMap">
+     <query>
+           SELECT count(*)
+            FROM PRD_PROD_FUND_MAP
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   
+   
+   <sql Id="CountInvLnkAllocRate">
+     <query>
+           SELECT count(*)
+            FROM PRD_ALLOC_RATES
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   
+   <sql Id="CountAnnuityDefn">
+     <query>
+           SELECT count(*)
+            FROM PRD_ANNUITY
+	    WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   
+   <sql Id="CountQuotationNotes">
+     <query>
+           SELECT count(*)
+            FROM PRD_QUOTATION_DTL
+	    WHERE LPRDQUOTHDRSEQNBR	 IN 
+	    (SELECT LPRDQUOTHDRSEQNBR FROM PRD_QUOTATION_HDR WHERE
+	    strprodcd = ? AND nprodver = ?)
+     </query>
+   </sql>
+   
+     <!-- end garima for new functionality in copy --> 
+   <sql Id="GrpSchemeCdSearch">
+     <query>
+           SELECT strgrpschemecd,strdesc
+            FROM com_group_scheme_m
+     </query>
+   </sql>
+   
+   <!-- Start:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+   <sql Id="SearchPaidUpDtl">
+     <query>
+           SELECT lvalpvseq,nmatagefrom,nmatageto,nattagefrom,nattageto,dratefactor,
+                  dintrate,dtefffrom,dteffto,dtcreated,strcreatedby,dtupdated,strupdatedby,NTERMFROM,NTERMTO,NPOLYEARFROM,NPOLYEARTO,nGenderCd,DSAFROM,DSATO
+            FROM prd_val_paidup_dtl
+            WHERE strtblcd = ? 
+     </query>
+   </sql>
+   <!-- End:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+   
+   <sql Id="ProductBonusRecordSearch">
+     <query>
+           SELECT lbonhdrseq
+            FROM prd_bon_hdr
+            WHERE 1=1
+     </query>
+   </sql>
+   <!--Start:23/11/2007:MaybanPH1:rekham:<TaskID>:PRD_BonusConfiguration  -->
+   <!--Start:28/12/2007:MaybanPH1:sonalb:<TaskID>:PRD_BonusConfiguration  -->
+   <!-- start:08/04/2009:TRM_MBF_POLBEN_00002:sonalb:added NBONRATEDECLRNTYPE,DTCOMCFROM, DTCOMCTO-->
+   <!-- sons -->
+   <sql Id="ProductBonusHdrSearch">
+     <query>
+           SELECT   nfiscalyear,dtefffrom,dteffto,cbontype,strprodcd,nprodver,nrisktype,
+            dtpolcomc,nbonbas,nbonunit,dtcreated,strcreatedby,dtupdated,strupdatedby,
+            strverifiedby,dtverified,strauthby,dtauth,NFISCALYEAR, NBONRATEDECLRNTYPE,DTCOMCFROM,DTCOMCTO
+            FROM prd_bon_hdr
+            WHERE lbonhdrseq = ?
+     </query>
+   </sql>
+   <!--End:23/11/2007:MaybanPH1  -->
+   <!-- end:08/04/2009:TRM_MBF_POLBEN_00002:sonalb-->
+   <!-- Start:24/12/2009:Internal :viniths: Modified Query as per requested by Heena-->
+   <sql Id="ProductBonusListSearch">
+     <query>
+           SELECT pbh.lbonhdrseq,pbh.dtefffrom,pbh.dteffto,pbh.strprodcd,pbh.nprodver,
+            cpsm.strcddesc nrisktype,cpsm1.strcddesc nbonbas,pbh.nbonunit
+            FROM prd_bon_hdr pbh,com_param_system_m cpsm,com_param_system_m cpsm1,
+            prd_key_info pki
+            WHERE pki.strprodcd = pbh.strprodcd 
+            AND   pki.nprodver = pbh.nprodver 
+            AND cpsm.iparamtypecd(+) = 1007
+            AND   pki.nrisktype = cpsm.nparamcd(+)
+            AND   cpsm1.iparamtypecd = 1037
+            AND   pbh.nbonbas = cpsm1.nparamcd  
+     </query>
+   </sql>
+   <!-- End:24/12/2009:Internal :viniths: Modified Query as per requested by Heena-->
+   <!--End:28/12/2007:MaybanPH1:sonalb  -->
+   <!--Start:23/11/2007:MaybanPH1:rekham:<TaskID>:PRD_BonusConfiguration  -->
+   <!-- Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+   <!-- Start : 11/02/2021 : URF29281_ElxirRPMig : Elixir Migration- Phase4:Traditional Regular Premium Products -->
+   <sql Id="ProductBonusDtlSearch">
+     <query>
+           SELECT lbondtlseq,ntermfrom,ntermto,npolyearfrom,npolyearto,dactualbonrate,nentryagefrom,nentryageto,dtcreated,
+            strcreatedby,dtupdated,strupdatedby,NCALCDATE, DTCALC,DSUPERCOMPRATE
+            FROM prd_bon_dtl
+            WHERE lbonhdrseq = ?
+            ORDER BY ntermfrom,ntermto, ntermfrom,npolyearfrom,nentryagefrom,nentryageto ASC
+     </query>
+   </sql>
+   <!-- End : 11/02/2021 : URF29281_ElxirRPMig : Elixir Migration- Phase4:Traditional Regular Premium Products -->
+   <!-- End:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+   <!--End:23/11/2007:MaybanPH1  -->
+   <sql Id="SearchBonusTypes">
+     <query>
+	       SELECT cbtm.strbondesc,cbtm.cbontype
+       	   FROM   com_bon_type_m cbtm
+       	   ORDER BY UPPER(LTRIM(strbondesc)) ASC
+     </query>
+   </sql>
+   <sql Id="SelectAllCoiDtl">
+     <query>
+       SELECT DISTINCT strcoitblcd,STRCOITBLDESC
+       FROM prd_coi_hdr 
+       ORDER BY strcoitblcd ASC
+     </query>
+   </sql>
+   <sql Id="SelectCoiHdr">
+     <query>
+       SELECT strcoitbldesc,dtcreated,strcreatedby,dtupdated,strupdatedby,strverifiedby,
+        dtverified,strauthby,dtauth,iunit
+       FROM prd_coi_hdr
+       WHERE strcoitblcd = ?
+     </query>
+   </sql>
+   <!-- Start TRM_MBF_URF19496_225 -->
+   <!-- Start TRM_MBF_URF20283_230 : MegaILP Agency -->
+   <sql Id="SelectCoiDtl">
+     <query>
+       SELECT lcoitbldtlseq,nage,ngendercd,
+        nissmoker,ncoveragetype,dmonthlyrate,dtcreated,strcreatedby,
+        dtupdated,strupdatedby,NCALBASIS,NPMTMODE
+        ,STROCCUPCLASS,NMEDDEDOPT, NMEDDEDLIMIT 
+        ,NPOLYEARFROM, NPOLYEARTO, NISGIOIND
+       FROM prd_coi_dtl
+       WHERE strcoitblcd = ?
+     </query>
+   </sql>
+   <!-- End TRM_MBF_URF20283_230 : MegaILP Agency -->
+   <!-- End TRM_MBF_URF19496_225 -->
+   <sql Id="SearchCOITblCodes">
+     <query>
+      SELECT DISTINCT strcoitblcd,
+      strcoitbldesc
+      FROM prd_coi_hdr
+      WHERE strauthby IS NOT NULL
+      </query>
+   </sql>
+   <!-- Start:internal|SIT|Reviewed by Prathamesh|Query modified to pick up products which are qualified for specified bonus type-->
+   <sql Id="SearchAuthProdForRiskType">
+     <query>
+        SELECT strprodcd,nprodver 
+		FROM prd_key_info 
+		WHERE nprodstat = ? 
+		AND nrisktype = ?
+		AND CBONTYPE = ?
+      </query>
+   </sql>
+   <!-- End:internal|SIT|Reviewed by Prathamesh -->
+   <sql Id="SearchProductByRiskType">
+     <query>
+        SELECT nrisktype
+		FROM prd_key_info 
+		WHERE strprodcd = ?
+		AND nprodver = ?
+      </query>
+   </sql>
+   <sql Id="SearchFiscalYears">
+     <query>
+        SELECT nyear nfiscalyear, dtstart, dtend 
+        FROM   com_bonus_year
+        ORDER BY nyear
+      </query>
+   </sql>
+ <!-- Start:05/08/2009:IT defect Id-4972:avinashss:Added to get years from fin_financial_year -->  
+ 
+   <sql Id="SearchFinancialFiscalYears">
+     <query>
+        SELECT nfiscalyear, dtstart, dtend 
+        FROM fin_financial_year
+        WHERE nfiscalmonth = 0
+		ORDER BY nfiscalyear
+      </query>
+   </sql>
+<!-- End:05/08/2009:IT defect Id-4972:avinashss-->     
+<!--Start:16/06/2009:TRM_MBF_ANN_00001:pritirs:Uncommented annuity code-->	
+   <sql Id="SelectAnnByProduct">
+     <query>
+        SELECT lannseq,naccumanntype,nannzanntype,nimmdordeferred,ndefnbencontr
+                ,nannvesting,niscashoptalow,dmaxcashoptperc,naccumon,nvarannopt,nisuwappl
+		,dtcreated,strcreatedby,dtupdated,strupdatedby,dtverified,strverifiedby
+		,dtauth,strauthby
+          FROM prd_annuity
+          WHERE strprodcd = ? AND nprodver = ?
+      </query>
+   </sql>
+   <!--  Start:24/09/2009:TRM_MBF_ANN_00002 :viniths:Added  NISSAANNSAME in sql Id="SelectAnnuity"  -->
+   <!--28-06-2018 | Pawan Annuity Start here --> 
+   <sql Id="SelectAnnuity">
+     <query>
+          SELECT lannseq,naccumanntype,nannzanntype,nimmdordeferred,ndefnbencontr
+                ,nannvesting,niscashoptalow,dmaxcashoptperc,naccumon,nvarannopt,nisuwappl
+		,dtcreated,strcreatedby,dtupdated,strupdatedby,dtverified,strverifiedby
+		,dtauth,strauthby, NISSAANNSAME,NACCUMFUNDTYPE,
+       NISACCUMSHFAPPL,NACCUMSHFFUNDTYPE,NISANNZSHFAPPL,
+       NANNZSHFFUNDTYPE,NLIFETIMEAGELIMIT
+          FROM prd_annuity
+          WHERE lannseq = ?
+      </query>
+   </sql>
+<!--28-06-2018 | Pawan Annuity End here -->    
+   <!--  End:24/09/2009:TRM_MBF_ANN_00002 :viniths:Added  NISSAANNSAME in sql Id="SelectAnnuity"  -->
+<!--End:16/06/2009:TRM_MBF_ANN_00001:pritirs-->	
+   <sql Id="SelectAnnJntPmtDtls">
+     <query>
+         SELECT lannseq,njntlifepmttill,dtcreated,strcreatedby
+                ,dtupdated,strupdatedby
+          FROM prd_ann_jnt_pmt
+          WHERE lannseq = ?
+      </query>
+   </sql>
+<!--28-06-2018 | Pawan Annuity Start here -->    
+   <sql Id="SelectAnnVestAgeDtls">
+     <query>
+         SELECT lannseq,nvestingage,dtcreated,strcreatedby
+                ,dtupdated,strupdatedby,strannzfundtype,nannzphase
+          FROM prd_ann_vesting
+          WHERE lannseq = ?
+      </query>
+   </sql>
+<!--28-06-2018 | Pawan Annuity End here -->    
+   <sql Id="SelectAnnAccumRateDtls">
+     <query>
+         SELECT lannseq,ninforceyearfrom,ninforceyearto,drate,iunit
+		,dtcreated,strcreatedby,dtupdated,strupdatedby
+          FROM prd_ann_accum_rate
+          WHERE lannseq = ?
+      </query>
+   </sql>
+   <sql Id="SelectAnnPmtModeDtls">
+     <query>
+         SELECT lannseq,npmtmode,dmodalfactor,dminannamnt,dmaxannamnt,nbasis,iunit
+		,dtcreated,strcreatedby,dtupdated,strupdatedby
+          FROM prd_ann_pmt_mode
+          WHERE lannseq = ?
+      </query>
+   </sql>
+   <sql Id="SelectAllInvLinkChgDtl">
+     <query>
+       SELECT DISTINCT pich.strinvesthdrtblcd, 
+					   pich.STRINVESTTBLDESC STRINVESTTBLDESC
+       FROM prd_invest_chg_hdr pich
+       ORDER BY pich.strinvesthdrtblcd ASC
+     </query>
+   </sql>
+   <sql Id="SelectInvLinkChgHdr">
+     <query>
+       SELECT 
+	   DTCREATED, 
+	   STRCREATEDBY, 
+	   DTUPDATED, 
+	   STRUPDATEDBY, 
+	   STRINVESTHDRTBLCD, 
+	   STRINVESTTBLDESC, 
+	   STRVERIFIEDBY, 
+	   DTVERIFIED, 
+	   STRAUTHBY, 
+	   DTAUTH,
+	   DADDSURRCHG
+       FROM prd_invest_chg_hdr
+       WHERE STRINVESTHDRTBLCD = ?
+       <!-- AND   NCHGTYPE = ? -->
+     </query>
+   </sql>
+   <!--  Start : 02/07/2018 : TRM_URF_21454_56_57_241 : KetanM : Columns NPRMTERMFROM & NPRMTERMTO Added For Premium Payment Term Changes  -->
+   <sql Id="SelectInvLinkChgDtl">
+     <query>
+       SELECT 
+	   LINVSCHGDTLSEQ, 
+	   NPOLYEARFROM, 
+	   NPOLYEARTO, 
+	   DRATE, 
+	   IBASISUNIT, 
+	   DFLATAMNT, 
+	   NHIGHLOWIND, 
+	   NPMTMODE,
+	   DMINCHGAMNT, 
+	   DMAXCHGAMNT, 
+	   DTCREATED, 
+	   STRCREATEDBY, 
+	   DTUPDATED, 
+	   STRUPDATEDBY, 
+	   DBASISRNGFROM, 
+	   DBASISRNGTO,
+	   NCHGTYPE,
+	   NCHGBASIS,
+	   NPRMTERMFROM,
+       NPRMTERMTO
+       FROM prd_invest_chg_dtl
+       WHERE STRINVESTHDRTBLCD = ?
+       </query>
+   </sql>
+   <!--  End : 02/07/2018 : TRM_URF_21454_56_57_241 : KetanM : Columns NPRMTERMFROM & NPRMTERMTO Added For Premium Payment Term Changes  -->
+   <sql Id="SearchAllInvLinkChgTblCodes">
+     <query>
+          SELECT DISTINCT strinvesthdrtblcd,
+			  strinvesttbldesc
+	  FROM prd_invest_chg_hdr
+      </query>
+   </sql>
+   <sql Id="SearchInvLinkChgTblCodes">
+     <query>
+          SELECT DISTINCT strinvesthdrtblcd,
+			  strinvesttbldesc
+	  FROM prd_invest_chg_hdr
+	  WHERE strauthby IS NOT NULL
+      </query>
+   </sql>
+   <sql Id="SearchByAnnSeqAnnznOptHdr">
+     <query>
+	SELECT lannoptalowseq,lannseq,nannzoptalow,ddefncontrperc,nnbrofannpmtben
+	       ,niscertainperd,dtcreated,strcreatedby,dtupdated,strupdatedby
+	FROM prd_ann_opt_alow WHERE lannseq = ?
+      </query>
+   </sql>
+   <sql Id="SearchAnnznOptHdr">
+     <query>
+	SELECT lannoptalowseq,lannseq,nannzoptalow,ddefncontrperc,nnbrofannpmtben
+	       ,niscertainperd,dtcreated,strcreatedby,dtupdated,strupdatedby
+	FROM prd_ann_opt_alow WHERE lannoptalowseq = ?
+      </query>
+   </sql>
+   <sql Id="SearchAnnznOptDtl">
+     <query>
+            SELECT lannoptalowseq,nperd,dtcreated,strcreatedby,
+            dtupdated,strupdatedby
+            FROM PRD_ANN_OPT_DTL
+            WHERE lannoptalowseq = ?
+      </query>
+   </sql>
+   <sql Id="AnnuityTableTypeSearch">
+     <query>
+       SELECT  strprmtbltyp,strdesc 
+       FROM  prd_prmtbltyps 
+       WHERE strtblname like ?
+       ORDER BY strprmtbltyp ASC
+     </query>
+   </sql>
+   <sql Id="SearchAnnRateMapBySeq">
+     <query>
+       SELECT lanntbltypseq,lannseq,nyearfrom,nyearto,
+              lprmtbltyphdrseq,dtcreated,strcreatedby,dtverified,
+              strverifiedby,dtauth,strauthby,dtupdated,
+              strupdatedby 
+       FROM prd_ann_tbl_type 
+       WHERE lannseq = ?
+       ORDER BY nyearfrom
+     </query>
+   </sql>
+   <sql Id="SearchAnnRateMap">
+     <query>
+       SELECT lanntbltypseq,lannseq,nyearfrom,nyearto,lprmtbltyphdrseq
+              ,dtcreated,strcreatedby,dtverified,strverifiedby,dtauth,
+              strauthby,dtupdated,strupdatedby 
+       FROM prd_ann_tbl_type
+       WHERE LANNTBLTYPSEQ = ?
+       ORDER BY nyearfrom
+     </query>
+   </sql>
+   <sql Id="SearchAnnuityRateTblCds">
+     <query>
+            SELECT pp.strprmtbltyp,pph.strtblcd,pp.strdesc,pph.lprmtbltyphdrseq
+            FROM prd_prmtbltyps pp,prd_prmtbltyp_hdr pph
+            WHERE pph.strprmtbltyp = pp.strprmtbltyp
+	    AND pp.strtblname LIKE ?
+            AND pph.strauthby IS NOT NULL
+     </query>
+   </sql>
+<!-- Added for SV/SC table codes in applicability page START -->
+   <sql Id="SelectSVCTableCodes">
+     <query>
+            SELECT pp.strprmtbltyp,pph.strtblcd,pp.strdesc,pph.lprmtbltyphdrseq
+            FROM prd_prmtbltyps pp,prd_prmtbltyp_hdr pph
+            WHERE pph.strprmtbltyp = pp.strprmtbltyp
+            AND pph.strauthby IS NOT NULL
+            AND pp.strtblname LIKE ?
+     </query>
+   </sql>
+<!-- Added for SV/SC table codes in applicability page END -->
+   <sql Id="SelectBenAnnPmt">
+     <query>
+       SELECT lbenannpmtseq,nphaseflg,nannznopt,njointlifeopt,ndeathOf,nannpaystatus,
+       npaymentceases,dbenrate,dtcreated,strcreatedby,
+       dtupdated,strupdatedby
+       FROM   prd_ann_ben_pmt
+       WHERE  leventbenseq = ?
+     </query>
+   </sql>
+   <sql Id="SelectAllPrdLnTrtmt">
+     <query>
+       SELECT lprdlntrtmtseq
+       FROM   prd_prdln_trtmt_m
+     </query>
+   </sql>
+   <sql Id="SelectPrdLnTrtmt">
+     <query>
+       SELECT lprdlntrtmtseq,strprodline,dlimitamntfrom,dlimitamntto,ntreatment,
+              npriority,dtcreated,strcreatedby,dtupdated,strupdatedby 
+       FROM   prd_prdln_trtmt_m
+       WHERE  lprdlntrtmtseq = ?
+     </query>
+   </sql>
+   <sql Id="SearchTblName">
+	 <query>
+	   SELECT STRPRMTBLTYP FROM PRD_PRMTBLTYPS WHERE STRTBLNAME LIKE ?  ORDER BY STRPRMTBLTYP
+	 </query>
+   </sql>
+   <sql Id="SearchPremiumTblRate2">
+	 <query>
+	   WHERE LPRMTBLTYPHDRSEQ = (SELECT lprmtbltyphdrseq FROM PRD_PRMTBLTYP_HDR WHERE STRPRMTBLTYP = ? AND STRTBLCD = ?)
+	 </query>
+   </sql>
+   
+   <!--Hemanth Added to transfer data between elixir to cms in product table -->
+   <sql Id="IntfPopPrd">
+    <query>
+        {call intf_pop_pd_prc(?,?,?,?,?)}
+    </query>
+   </sql>
+   <!--Added By Rekha for commontool-->
+   <sql Id="PRDSearchSelect">
+   <query>
+	SELECT strprodname,strprodcd,testseq
+    FROM    PRODTEST 
+	</query>
+	<param ID="1"> AND strprodname = ? </param>
+	<param ID="2"> AND strprodcd = ? </param>
+	<!--Hemanth End-->
+     </sql>
+	 <sql Id="ProdSearchSQL">
+   	<query>
+	SELECT strprodname,strprodcd,testseq
+    FROM    PRODTEST where testseq = ?
+	</query>
+	</sql>
+	<!-- End -->
+	<!--  Start:05/11/2007:MaybanPH1:rekham:<TaskID>:PRD_RestrictedOccupation -->  
+   <sql Id="RestrictedOccupSearch">
+	 <query>
+   SELECT STRPRODCD,NPRODVER,STROCCUPCD,DTCREATED,STRCREATEDBY,DTUPDATED,STRUPDATEDBY,
+   ( SELECT STROCCUPNAME FROM COM_OCCUPATION_M WHERE STROCCUPCD = occ.STROCCUPCD)as STROCCUPNAME
+   FROM PRD_OCC_REST occ
+   WHERE STRPRODCD = ? AND NPRODVER = ? 
+	 </query>
+   </sql> 
+   <sql Id="RestrictOccSearch">
+	 <query>
+   SELECT STRPRODCD,NPRODVER,STROCCUPCD,DTCREATED,STRCREATEDBY,DTUPDATED,STRUPDATEDBY,
+   ( SELECT STROCCUPNAME FROM COM_OCCUPATION_M WHERE STROCCUPCD = occ.STROCCUPCD)as STROCCUPNAME
+   FROM PRD_OCC_REST occ
+   WHERE STRPRODCD = ? AND NPRODVER = ? AND STROCCUPCD =?
+	 </query>
+   </sql> 
+       <!--  End:05/11/2007:MaybanPH1:rekham -->
+   	<!--  Start:05/11/2007:MaybanPH1:rekham:<TaskID>:PRD_WaiverOfPremium --> 
+    <!-- Start:29/06/2009:CR 23:shweta:Added a new column for WOP Treatment Type -->
+   <sql Id="RidersWaivedSearch">
+	<query>SELECT a.strriderprodcd,a.nriderprodver,a.strcreatedby,a.dtcreated,
+		a.strupdatedby,a.dtupdated,b.strprodname,a.nTreatmntType
+		FROM prd_waiver_benefit a , prd_key_info b
+		WHERE a.strprodcd = ? AND a.nprodver = ?
+		  AND strriderprodcd = ? AND a.nriderprodver = ?
+		  AND b.strprodcd = a.strriderprodcd
+		  AND b.nprodver = a.nriderprodver</query>
+   </sql>
+
+   <sql Id="FindByProductBaseRiderSearch">
+	<query>SELECT strprodcd,nprodver,strriderprodcd,nriderprodver,ntreatmnttype FROM PRD_WAIVER_BENEFIT
+ 	WHERE strprodcd = ? AND nprodver = ? 
+	</query>
+   </sql>
+      <!-- End:29/06/2009:CR 23:shweta:Added a new column for WOP Treatment Type -->
+    <!--  End:05/11/2007:MaybanPH1:rekham -->
+    
+    <!-- Sonal -->
+    <sql Id="SearchThirdPartyRelation">
+	<query>SELECT LTHIRDPARTYSEQ,NRELNCD,DTCREATED,STRCREATEDBY,DTUPDATED,STRUPDATEDBY FROM prd_thirdparty_relations
+ 
+		WHERE strprodcd = ? AND nprodver = ? 
+	</query>
+   </sql>
+	 
+	 <!-- Sonal -->
+    <sql Id="SelectTPProdInfo">
+	<query>SELECT NISALLOWTHIRDPARTY FROM prd_info_1
+ 			WHERE strprodcd = ? AND nprodver = ? 
+	</query>
+   </sql>
+   
+   <!-- Sumedh -->
+   <!-- //          Start:08/06/2009:chandrashekharb:Defect Id 391 :Added order by clause -->
+    <sql Id="BaloonPercDetailsSearch">
+	<query>SELECT STRPRODCD,NPRODVER,DPERC,LRTABALOONSEQ FROM PRD_RTA_BALOON_PERC
+ 			WHERE strprodcd = ? AND nprodver = ? order by DPERC
+	</query>
+   </sql>
+   <!-- //          End:08/06/2009:chandrashekharb:Defect Id 391 :Added order by clause -->    
+   <sql Id="UnearnedPrmDetailsSearch">
+	<query>SELECT STRPRODCD,NPRODVER,NDAYSFROM,NDAYSTO,NPMTMODE,DBASISUNIT,DPERC,LUNEARNEDSEQ FROM PRD_UNEARNED_PRM_DTL
+ 			WHERE strprodcd = ? AND nprodver = ? ORDER BY LUNEARNEDSEQ ASC
+	</query>
+   </sql>
+
+    <!-- Start:28/04/2023||Rohit#10||TRM_MBF_ECNURF_1379_345_P1||Added to fetch product unit rule details for epf phase-2 -->
+    <sql Id="PrdUnitRuleDetailsSearch">
+        <query>SELECT STRPRODCD,NPRODVER,NRELNWITHFIRSTLA,DOPERATOR,DBASIS,DRATE,LUNITRULESEQ FROM PRD_UNIT_RULE
+            WHERE strprodcd = ? AND nprodver = ? ORDER BY LUNITRULESEQ ASC
+        </query>
+    </sql>
+    <!-- End:28/04/2023||Rohit#10||TRM_MBF_ECNURF_1379_345_P1||Added to fetch product unit rule details for epf phase-2 -->
+   
+  	<!--Start:7/05/2011:vigneshA|3891-->
+   <sql Id="WopFormRiderDetailsSearch">
+   <query>
+   		SELECT NWOPFORMCD,STRPRODCD,NPRODVER,STRRIDERPRODCD,NRIDERPRODVER,LWOPOCCRIDSEQ,
+   		(SELECT STRCDDESC FROM COM_PARAM_SYSTEM_M WHERE IPARAMTYPECD=1137 AND NPARAMCD = NWOPFORMCD ) STRWOPFORMDESC FROM PRD_WOP_OCC_RID
+   		WHERE strprodcd = ? AND nprodver = ? AND nwopformcd  = ?
+   </query>
+   </sql>
+   	<!--End:7/05/2011:vigneshA|3891-->
+   
+   <sql Id="ProductGroupTypeSearch">
+	<query>SELECT STRGRPID FROM PRD_MAXSA_SP_DTL
+ 			WHERE NGRPTYPE = ? 
+	</query>
+   </sql>
+	<!-- Start garima 28-12-08 for varSA --> 
+	<sql Id="VarSARateSearch">
+      <query>
+             SELECT LVSAPRMDTLSEQ,NTERMFROM,
+             NTERMTO,NENTRYAGEFROM,NENTRYAGETO,
+             NPOLYEARFROM,NPOLYEARTO,DVARRATE,
+             STRCREATEDBY,DTCREATED,STRUPDATEDBY,DTUPDATED
+             FROM PRD_VSA_PRM_DTL
+             WHERE 
+             LVSAPRMHDRSEQ = ?
+             AND
+             ? BETWEEN NTERMFROM AND NTERMTO
+             AND
+             ? BETWEEN NENTRYAGEFROM AND NENTRYAGETO
+             
+             
+	  </query>     
+   </sql>
+   
+   <sql Id="getVarSAMinPolYrFrom">
+      <query>
+             SELECT min(NPOLYEARFROM)
+             FROM PRD_VSA_PRM_DTL
+             WHERE 
+             LVSAPRMHDRSEQ = ?
+             AND
+             ? BETWEEN NTERMFROM AND NTERMTO
+             AND
+             ? BETWEEN NENTRYAGEFROM AND NENTRYAGETO
+             
+             
+	  </query>     
+   </sql>
+	    <!--Start:17/12/2007:MaybanPH1:deenaa: PRD_ExtraMortalityDefinition -->
+   
+  <sql Id="ListExtraMortalityDefnHdr">
+     <query>
+		SELECT DISTINCT 
+		  peh.STREXTRAPRMTBLCD,
+		  cpsm.strcddesc BASIS,
+		  peh.DBASIS
+		FROM 
+		  PRD_EXTRPRM_HDR peh,
+		  COM_PARAM_SYSTEM_M cpsm
+		WHERE cpsm.iparamtypecd = 1121
+		   AND cpsm.nparamcd = peh.DBASIS
+		 ORDER BY peh.STREXTRAPRMTBLCD,BASIS ASC
+     </query>
+   </sql>  
+   <!-- //start:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+   <!-- vaibhav#777 Start added  NPRMTERMFROM and NPRMTERMTO -->
+     <sql Id="SelectExtraMortalityDefnDtl">
+     <query>
+		select 
+			LEXPRMDTLSEQNBR,
+			NAGEFROM,
+			NAGETO,
+			NTERMFROM,
+			NTERMTO,	
+			NEMRATE,
+			DRATE,
+			DTCREATED,
+			STRCREATEDBY,
+			DTUPDATED,
+			STRUPDATEDBY,
+			NGENDER,
+			NPAYMENTMODE,
+			NISSMOKER,
+			NNOOFSTICKS,
+			STROCCUPCLASS,
+			NPRMTERMFROM,
+			NPRMTERMTO
+		from 
+			PRD_EXTRPRM_DTL
+		where 
+			LEXPRMHDRSEQNBR = ? 
+     </query>
+   </sql> 
+	<!-- vaibhav#777 End -->   
+   <!-- //End:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+	<sql Id="SelectExtraMortalityDefnHdr">
+		<query>
+			select 
+			  LEXPRMHDRSEQNBR,	
+			  DBASIS,
+			  DTCREATED,
+			  STRCREATEDBY,
+			  DTUPDATED,
+			  STRUPDATEDBY,
+			  NUNIT,
+			  STRVERIFIEDBY,
+			  DTVERIFIED,
+			  STRAUTHBY,
+			  DTAUTH
+			from
+			  PRD_EXTRPRM_HDR
+			where
+			  STREXTRAPRMTBLCD = ?
+		</query>
+	</sql>
+	
+	<sql Id="SearchAllExtraMortalityDefnTblCodes">
+     <query>
+      	SELECT DISTINCT STREXTRAPRMTBLCD FROM PRD_EXTRPRM_HDR
+      </query>
+   </sql>
+	<!--End :18/09/2007:MaybanPH1:deenaa -->
+	
+	 <sql Id="ListRSAFactorHdr">
+     <query>
+		SELECT DISTINCT 
+		  prth.STRRSATBLCD,
+		  cpsm.strcddesc BASIS,
+		  prth.NBASIS
+		FROM 
+		  PRD_RSA_TBL_HDR prth,
+		  COM_PARAM_SYSTEM_M cpsm
+		WHERE cpsm.iparamtypecd = 1121
+		   AND cpsm.nparamcd = prth.NBASIS
+		ORDER BY prth.NBASIS ASC
+     </query>
+   </sql>  
+   <!-- //start:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+     <sql Id="SelectRSAFactorDtl">
+     <query>
+		select 
+			LRSADTLSEQNBR,
+			NPOLYEARFROM, 
+			NPOLYEARTO, 
+			NTERMFROM, 
+			NTERMTO,
+			NDEFERPERD,
+			DINTEREST,
+	        DRATE,
+			DTCREATED,
+			STRCREATEDBY,
+			DTUPDATED,
+			STRUPDATEDBY
+		from 
+			PRD_RSA_TBL_Dtl
+		where 
+			LRSAHDRSEQNBR = ? 
+     </query>
+   </sql> 
+   <!-- //End:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+	<sql Id="SelectRSAFactorHdr">
+		<query>
+    		select 
+			  LRSAHDRSEQNBR,	
+			  NBASIS,
+			  DTCREATED,
+			  STRCREATEDBY,
+			  DTUPDATED,
+			  STRUPDATEDBY,
+			  NUNIT,
+			  STRVERIFIEDBY,
+			  DTVERIFIED,
+			  STRAUTHBY,
+			  DTAUTH
+			from
+			  PRD_RSA_TBL_HDR
+			where
+			  STRRSATBLCD = ?
+		</query>
+	</sql>
+	
+	<sql Id="SearchAllRSAFactorTblCodes">
+     <query>
+      	SELECT DISTINCT STRRSATBLCD FROM PRD_RSA_TBL_HDR
+      </query>
+   </sql>
+	
+	<!--Start:17/12/2007:MaybanPH1:sumedh: PRD_LoyaltyBonusDetailsSearch -->
+	<!--Start:CR-365|SunilN|27-MAY-2013|Tracebility No.:TRM_MBF_CR365_0058|modified query for Loayalty bonus for ELITE Investmentlink Product-->
+	<!-- START:24/7/2014:DEFECT-9758:added NPREMBASIS field -->
+    <!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-Start Added STRFUNDTYPE-->
+	<sql Id="LoyaltyBonusDetailsSearch">
+	<query>
+ 			SELECT STRPRODCD,NPRODVER,NMINPRMPMTYRS,DLOYALTYRATEPERC,DMAXORGPREMPERC,LLOYATBONSEQ,NPREMBASIS,STRFUNDTYPE FROM PRD_LOYALT_BON_DTL WHERE STRPRODCD=? AND NPRODVER=?
+ 			order by LLOYATBONSEQ asc
+	</query>
+   </sql>
+    <!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-End Added STRFUNDTYPE-->
+   <!-- END:24/7/2014:DEFECT-9758:added NPREMBASIS field -->
+   <!--End:CR-365|SunilN|27-MAY-2013|Tracebility No.:TRM_MBF_CR365_0058|modified query for Loayalty bonus for ELITE Investmentlink Product-->
+    <!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-Start Added STRFUNDTYPE-->
+    <sql Id="LoyaltyBonusFundTypeSearch">
+        <query>
+            SELECT DISTINCT STRFUNDTYPE,STRFUNDDESC FROM PRD_FUND_LOYALTY_BON_VW order by strfunddesc asc
+        </query>
+    </sql>
+    <!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-End Added STRFUNDTYPE-->
+    <sql Id="GmsvDetailsSearch">
+	<query>SELECT STRPRODCD,NPRODVER,NPOLYEARFROM,NPOLYEARTO,DRATIO,LGMSVDTLSEQ FROM PRD_INVEST_GMSV_DTL
+ 			WHERE STRPRODCD	 = ? AND NPRODVER = ? ORDER BY LGMSVDTLSEQ ASC
+	</query>
+   </sql>
+	
+	<!--End :18/09/2007:MaybanPH1:deenaa --> 
+	<!-- Start:08/05/2008:MaybanPH1:tanujam:<taskid>:changed field nfundtype to NUNITFUNDTYPE  -->
+	<!-- Start:26/12/2007:MaybanPH1:tanujam:<TaskID>:PRD_AllocreateFundMSModal -->
+   <sql Id="SelectFundType">
+     <query>
+         SELECT strfundcd,NUNITFUNDTYPE
+	 FROM com_fund_info_m
+     </query>
+   </sql> 
+   <!-- End:26/12/2007:MaybanPH1:tanujam-->
+   <!-- End:08/05/2008:MaybanPH1:tanujam -->	
+   <sql Id="SelectFundCatg">
+     <query>
+         SELECT strfundcd,nfundcatg,
+         (select strcddesc from com_param_system_m where iparamtypecd=3047 and nparamcd=cfim.nfundcatg) strFundCatg
+	 FROM com_fund_info_m cfim
+     </query>
+   </sql> 
+   <!-- Start:26/12/2007:MaybanPH1:tanujam:<TaskID>:PRD_JointLifeLastToDie -->
+   <sql Id="RateScaleOptionSearch">
+   <!-- START:25-3-2009:TRM_MBF_PRDPMT_00001:avinashss:Code changes for addition of new field -->
+   
+     <query>SELECT 	strprodcd,nprodver,nratescaleoption,lratescaleseq,strcreatedby,strupdatedby,dtcreated,dtupdated,NSTARTYEAR
+	    FROM   prd_periodic_rate_scale
+	    WHERE  strprodcd = ? AND  nprodver  = ?
+     </query>
+     
+    <!-- END:25-3-2009:TRM_MBF_PRDPMT_00001:avinashss --> 
+   </sql>
+   
+  <sql Id="SearchRateScalePopUp">
+     <query>SELECT 	strprodcd,nprodver,nratescaleoption,lratescaleseq,strcreatedby,strupdatedby,dtcreated,dtupdated
+	    FROM   prd_periodic_rate_scale
+	    WHERE  strprodcd = ? AND  nprodver  = ?
+     </query>
+   </sql>
+   
+   <sql Id="NoOfLivesSearch">
+     <query>SELECT 	NNBROFLIVES	
+	    FROM   PRD_INFO_2
+	    WHERE  STRPRODCD = ? AND  NPRODVER  = ?
+     </query>
+   </sql>
+   <!-- End:26/12/2007:MaybanPH1:tanujam-->
+    <!-- Start:10/06/2009:dipikam:DEFECT_FIXING_IT_1925:Added Order by clause-->
+   <sql Id="SalIllustrationSearch">
+     <query>SELECT 	STRSISCD,STRSISDESC		
+	    FROM   POS_SIS_REPORT_M
+    ORDER BY STRSISDESC
+     </query>
+   </sql>
+   <!-- End:10/06/2009:dipikam:DEFECT_FIXING_IT_1925:Added Order by clause-->
+
+   <sql Id="SearchAfflnGrpDtls">
+     <query>SELECT 	STRGRPCD,STRDESC		
+	    FROM   PRD_AFFLN_GRP_MAP
+     </query>
+   </sql>
+   
+
+   	<!--Start:04/01/2008:MaybanPH1:deenaa: PRD_Quotation Notes-->
+   <sql Id="QuotationHdrListSearch">
+     <query>
+		select cpsm.STRCDDESC, pqh.LPRDQUOTHDRSEQNBR
+		from PRD_QUOTATION_HDR pqh, com_param_system_m cpsm
+		where 
+		  pqh.NSALESILLUTYPE = cpsm.NPARAMCD and 
+		  IPARAMTYPECD=1578 and
+		  STRPRODCD = ? and
+		  NPRODVER = ?		  
+     </query>
+   </sql>	
+   
+  <sql Id="QuotationHdrSearch">
+     <query>
+		select NSALESILLUTYPE,LPRDQUOTHDRSEQNBR
+		from PRD_QUOTATION_HDR
+		where
+		  STRPRODCD = ? and
+		  NPRODVER = ?		  
+     </query>
+   </sql>	
+   <!-- start:16/06/2009:TRM_MBF_UL_00008:sonalb:added  order field -->
+   <sql Id="SelectQuotationNoteDtl">
+     <query>
+		select 
+		    LPRDQUOTDTLSEQNBR,
+		    STRREMARKS,
+		    DTCREATED,
+		    STRCREATEDBY,
+		    DTUPDATED,
+		    STRUPDATEDBY,
+		    NORDER
+		from 
+		    PRD_QUOTATION_DTL
+		where 
+		    LPRDQUOTHDRSEQNBR = ?
+		    ORDER BY NORDER
+     </query>
+   </sql> 
+ <!-- end:16/06/2009:TRM_MBF_UL_00008:sonalb -->  
+	<sql Id="SelectQuotationNoteHdr">
+		<query>
+			select 
+			  STRPRODCD,	
+			  NPRODVER,
+			  NSALESILLUTYPE,
+			  DTCREATED,
+			  STRCREATEDBY
+			from
+			  PRD_QUOTATION_HDR
+			where
+			  LPRDQUOTHDRSEQNBR = ?
+		</query>
+	</sql>
+	
+		<sql Id="SelectProductQuotationStatus">
+		<query>
+			SELECT NSTATCD
+			FROM PRD_AUTHORIZATION
+			WHERE 
+				STRPRODCD = ? AND 
+				NPRODVER = ? AND 
+				NFUNCTIONALITY = 78
+		</query>
+	</sql>
+   
+	<!--End :04/01/2008:MaybanPH1:deenaa -->
+	<!-- Start:10/02/08:MayabanPh1:garima -->
+	<sql Id="ComPolVarSASelect">
+		<query>
+			SELECT count(*)
+			FROM COM_POL_VAR_SA
+			WHERE 
+				STRPOLNBR = ? 
+		</query>
+	</sql>
+	<!-- End:10/02/08:MayabanPh1:garima -->
+	
+	<!-- Start:10/02/08:MayabanPh1:sumedhd -->
+	<!-- start:01/04/2008:MaybanPH1:sonalb<defect id 512>:added NEVENTTYPE for event type field -->
+	<sql Id="AfflictionRednDtlSearch">
+		<query>SELECT STRAFFLNSCHEDNBR,LAFFLNBENDTLSEQ,LREDNAFFLNBENDTLSEQ,NREDNTYPE,NREDNBASIS,DREDVALUE,LREDUCTIONDTLSEQ, NEVENTTYPE FROM PRD_AFFLN_BEN_REDN_DTL
+ 			WHERE STRAFFLNSCHEDNBR = ? AND LAFFLNBENDTLSEQ = ? ORDER BY LREDUCTIONDTLSEQ ASC
+		</query>
+  	</sql>
+  	<!-- end:01/04/2008:MaybanPH1:sonalb<defect id 512>:added NEVENTTYPE for event type field -->
+	<!-- End:20/01/08:MayabanPh1:sumedhd -->
+  
+  
+  <!-- Start:10/02/08:MayabanPh1:sumedhd -->
+  <!--Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and Rate scale option columns  -->
+	<sql Id="LienSeqDetailSearch">
+		<query>SELECT LAGEYRTERMSEQ,NTERMFROM,NTERMTO,NEVENTAGEFROM,NEVENTAGETO,NPOLYEARFROM,NPOLYEARTO,DBENRATE,NPRMPAYTERMFROM,NPRMPAYTERMTO,NRATESCALEOPTION,LAFFLNBENDTLSEQ FROM PRD_BEN_AGEYRTERM
+ 			WHERE LAFFLNBENDTLSEQ = ? ORDER BY LAGEYRTERMSEQ ASC
+		</query>
+  	</sql>
+  	<!--Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and Rate scale option columns  -->
+	<!-- End:20/01/08:MayabanPh1:sumedhd -->
+	
+	<sql Id="AfflictionRednDtlCount">
+		<query>SELECT count(*) FROM PRD_AFFLN_BEN_REDN_DTL
+ 			WHERE STRAFFLNSCHEDNBR = ? AND LAFFLNBENDTLSEQ = ? 
+		</query>
+  	</sql>
+<!--start :30/07/2008:garima:Takaful:Contribution Based Product -->  	
+<sql Id="SearchContributionDtls">
+		<query>SELECT DCONTRIBUTIONAMT FROM PRD_CONTRIBUTION_M
+ 			WHERE STRPRODCD = ? AND NPRODVER = ? 
+		</query>
+  	</sql>
+  	<!--End :30/07/2008:garima:Takaful:Contribution Based Product -->
+  	<!--Start:Pranalee:10/10/11 : defect8323|CR365B|added for type of SA and SA in multiples of fields -->
+  	<sql Id="SearchMultipleSADtls">
+		<query>SELECT DMULTIPLESAAMT FROM PRD_MULTIPLESA_M
+ 			WHERE STRPRODCD = ? AND NPRODVER = ? 
+		</query>
+  	</sql>
+	
+	<!-- Start | Pranav | 06-05-2022| TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility -->
+	<sql Id="SearchBoosterElgRl">
+		<query>SELECT LVSAPRMELIGIBLSEQ,STRELIGIBILITYDESC, NELIGIBILITY, LVSAPRMELIGIBLSEQ FROM prd_vsa_prm_booster_rules
+ 			WHERE STRPRODCD = ? AND NPRODVER = ? 
+		</query>
+  	</sql>
+  	<!-- End | Pranav | 06-05-2022 | TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility -->
+	
+	
+  		<!--End:Pranalee:10/10/11 : defect8323|CR365B|added for type of SA and SA in multiples of fields -->
+  	<!--start:Vandhana:APL Lapse Options -->
+  	<sql Id="SelectAplDetails">
+  		<query>
+  			SELECT LAPLLAPSETRTSEQ,	
+				   STRPRODCD,
+				   NPRODVER,	
+				   NAPLLAPSTRTMT,	
+				   DTEFFFROM,
+				   DTUPDATED	
+			FROM PRD_APLLAPSE_TRTMT
+			WHERE STRPRODCD = ?
+			AND NPRODVER = ?
+			ORDER BY DTCREATED
+  		</query>
+  	</sql>
+  	<!--End:Vandhana:APL Lapse Options -->
+ <!-- //          Start:08/06/2009:chandrashekharb:Defect Id 391 :Added order by clause -->  	
+<!-- Start:23/03/2009:chandrashekharb:TRM_MBF_MRTA_00010:Added for zero payment percentage -->   	
+    <sql Id="ZeroPaymentPercSearch">
+	<query>SELECT STRPRODCD,NPRODVER,DPERC,LRTAZEROPAYMENTSEQ FROM PRD_ZERO_PAYMENT
+ 			WHERE strprodcd = ? AND nprodver = ? order by DPERC
+	</query>
+	<!--  End:23/03/2009:chandrashekharb:TRM_MBF_MRTA_00010:Added for zero payment percentage --> 
+ <!-- //          End:08/06/2009:chandrashekharb:Defect Id 391 :Added order by clause -->	
+   </sql> 
+   
+   	<!-- Start:31-03-2009:Vandhana:TRM_MBF_MRTA_00009-->
+  		<sql Id="MapexVoulmeSql">
+  		<query>
+  			SELECT COUNT(1)
+			FROM PRD_DISCOUNT_HDR
+			WHERE STRPRODCD = ?
+			AND NPRODVER = ?
+			
+  		</query>
+  	</sql>
+  	<!-- End:31-03-2009:Vandhana:TRM_MBF_MRTA_00009--> 
+  	<!-- Start:14-07-2009:Defect Id -1150:avinashss:added order by clause -->
+  	
+  	  <sql Id="SelectFundTypeName">
+     <query>
+     SELECT strfundtype, strfunddesc
+	 FROM FIN_FUND_TYPE_M
+	 ORDER BY strfundtype
+     </query>
+   </sql>
+   <!-- END:14-07-2009:Defect Id -1150:avinashss -->
+   
+    <sql Id="SelectFundTypeCatg">
+     <query>
+         SELECT strfundcd,nfundcatg,
+         (select strcddesc from com_param_system_m where iparamtypecd=3047 and nparamcd=ftm.nfundcatg) strFundCatg
+	 FROM prd_prod_fund_map ftm
+         where STRPRODCD = ?
+         and NPRODVER = ?
+         and nfundcatg in (2,3,4)
+     </query>
+   </sql> 	
+   <!-- Start:prathamesh:05-06-2009:prathameshs:TRM_TKF_PRD_00002:Query added for takaful-->
+   <!-- Start:29/07/2009:Defect 4479:viniths: Added order by clause in sql Id="WakalahDedSearch"-->
+   <!-- Start:Sunil:06-JAN-2012:CR-279:TRM_MBF_279_00001:field added for Mapex Indicator -->
+   <!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022|field added for Multiple Rate Indicator| START -->
+   <sql Id="WakalahDedSearch">
+     <query>
+       select  
+       	nBasis Basis
+       ,nEventType EventType
+       ,nFeeType FeeType
+       ,dFlatAmount FlatAmount
+       ,dFlatRate FlatRate
+       ,nFrequency Frequency
+       ,nunit	   Unit
+       ,strFundTypeFrom FundTypeFrom
+       ,strFundTypeTo FundTypeTo
+       ,nIsStaff  IsStaff
+       ,nRateType RateType
+       ,nSeqOfApplc SeqOfApplc
+       ,lTKFModelSeq lTKFModelSeq
+ 	   ,nismapexapp  IsMapex
+	 ,nismultirateapplc IsMultiRateApplc  
+ 	   from prd_takaful_m 
+ 	   where strprodcd = ? and nprodver=?
+ 	   order by nSeqOfApplc
+     </query>
+   </sql> 
+   <!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022|END -->   
+   <!-- End:Sunil:06-JAN-2012:CR-279:TRM_MBF_279_00001:field added for Mapex Indicator -->
+   <!-- End:29/07/2009:Defect 4479:viniths: Added order by clause in sql Id="WakalahDedSearch"-->
+   <!-- //Start:3/11/2014:TRM_MBF_CR434_0136:added takaful rate type -->
+   <!-- Start:25-Oct-2017:TRM_MBF_URF19496_225:Added NPRMTERMFROM,NPRMTERMTO -->
+   <!-- Start TRM_MBF_URF20283_230 : MegaILP Agency -->
+   <!-- Start:11-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added NCOVERAGETYPE,STROCCUPCLASS -->
+   <!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022|fields DTEFFFROM, DTEFFTO|START -->
+   <sql Id="WakalahVarRatesSearch">
+     <query>
+		 select 
+		       nAgeFrom AgeFrom
+		      ,nAgeTo   AgeTo
+		      ,dAmount  Amount
+		      ,nBasisFrom BasisFrom
+		      ,nBasisTo BasisTo
+		      ,nGender  Gender
+		      ,lTKFModelSeq lTKFModelSeq
+		      ,lTKFRateSeq  lTKFRateSeq
+		      ,nPolYrFrom PolYrFrom
+		      ,nPolYrTo PolYrTo
+		      ,dRate    Rate
+		      ,nTermFrom  TermFrom
+		      ,nTermTo  TermTo
+		      ,nRateType RateType
+		      ,NPRMTERMFROM
+		      ,NPRMTERMTO
+		      ,NISSMOKER
+		      ,NISGIOIND
+		      ,NCOVERAGETYPE
+		      ,STROCCUPCLASS
+			,DTEFFFROM
+			,DTEFFTO
+		 from prd_takaful_rate_dtl
+		 where lTKFModelSeq = ?
+     </query>
+   </sql> 
+   <!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022|END -->   
+   <!-- End:11-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added NCOVERAGETYPE,STROCCUPCLASS -->
+   <!-- End TRM_MBF_URF20283_230 : MegaILP Agency -->
+   <!-- End:25-Oct-2017:TRM_MBF_URF19496_225:Added NPRMTERMFROM,NPRMTERMTO -->
+ <!-- //End:3/11/2014:TRM_MBF_CR434_0136:added takaful rate type --> 
+   <!-- End:prathamesh:05-06-2009:prathameshs:TRM_TKF_PRD_00002-->
+   <!-- Start:prathamesh:09-06-2009:prathameshs:TRM_TKF_PRD_00003:Query added for takaful Partial Withdrawal Setup-->
+    <sql Id="TkfPartialWithdrawalSearch">
+     <query>
+       	select 
+	      ltkfpartwithdseq, 
+	      strprodcd, 
+	      nprodver, 
+	      nwithdstartyear, 
+	      nmaxwithdallwd, 
+	      dminwithamnt, 
+	      dminpabalamnt, 
+	      dminpabalperc, 
+	      nrateamtcriteria, 
+	      dwithdfee, 
+	      dtcreated, 
+	      strcreatedby,
+	      dtupdated,
+          strupdatedby
+    	from
+      	prd_tkf_part_withd_m
+    	where strprodcd = ? and nprodver=?
+     </query>
+   </sql> 
+   <sql Id="TkfPartialWithdrawalDtlSearch">
+     <query>
+		 select 
+        	ltkfpartwithddtlseq, 
+        	ltkfpartwithdseq, 
+	        npolyrfrom, 
+	        npolyrto, 
+	        dmaxrate, 
+	        nyrsbfrmaturityfrom, 
+	        nyrsbfrmaturityto, 
+	        dtcreated, 
+	        strcreatedby,
+	        dtupdated,
+	        strupdatedby
+    	from prd_tkf_part_withd_dtl
+    	where ltkfpartwithdseq = ?
+     </query>
+   </sql> 
+   <!-- End:prathamesh:09-06-2009:prathameshs:TRM_TKF_PRD_00003 -->
+   
+   
+    <!-- Start:04/06/2009:anupd:TRM_TKF_PRD_00005:Added query for surplus sharing -->   		
+  <sql Id="selectsurplusshare">
+     <query>
+       SELECT ptsdm.LSHAREDECLSEQ,
+              ptsd.LSHAREDTLSEQ,
+			  ptsdm.STRPRODCD,
+			  ptsdm.NPRODVER,
+			  ptsdm.NSHARETYPE,
+			  ptsdm.NRATETYPE,
+			  ptsd.STRFUNDTYPE,
+			  ptsd.NRATEFLAT
+	   FROM   PRD_TKF_SHARING_DECLR_M ptsdm, 
+	          PRD_TKF_SHARING_DTL ptsd
+	   WHERE  ptsdm.LSHAREDECLSEQ = ptsd.LSHAREDECLSEQ
+	   AND    ptsdm.STRPRODCD=?
+       AND    ptsdm.NPRODVER=?
+       AND    ptsdm.NSHARETYPE=?
+      </query>
+   </sql>
+   <sql Id="SelectHdrRec">
+     <query>
+       SELECT LSHAREDECLSEQ
+	   FROM   PRD_TKF_SHARING_DECLR_M  
+	   WHERE  STRPRODCD=?
+       AND    NPRODVER=?
+       AND    NSHARETYPE=?
+       AND    NRATETYPE=?
+      </query>
+   </sql>
+ <!-- End:04/06/2009:anupd:TRM_TKF_PRD_00005:Added query for surplus sharing -->
+ <!-- Start:07/06/2009:anupd:TRM_TKF_PRD_00004:Added query for Top up -->
+   <sql Id="SelectTopUpRec">
+     <query>
+      SELECT  NMAXNBRTPUPPRYR,
+			  NMAXTOPUPRATE,
+			  NBASIS,
+			  NRATEOFALLOC,
+			  STRFUNDTYPE
+	  FROM    PRD_TKF_TOPUP_RULES 
+	  WHERE   STRPRODCD = ?
+	  AND     NPRODVER = ?
+      </query>
+   </sql>
+ <!-- End:07/06/2009:anupd:TRM_TKF_PRD_00004:Added query for Top up -->
+ <!-- Start:prathameshs:15-06-2009:TRM_TAKF_PRD_00002:Queries for TakafulCount  -->
+ 	<sql Id="CountTkfModelDefn">
+ 	<query>
+ 	      select Count(*)
+		  from prd_takaful_m
+		  where strProdCd=?
+		  and nProdVer=?
+ 	</query>
+ 	</sql>
+ 	<sql Id="CountTkfPartWithDrawal">
+ 	<query>
+ 	      select Count(*)
+		  from prd_tkf_part_withd_m
+		  where strprodcd = ? and nprodver = ?
+ 	</query>
+ 	</sql>
+ 	<sql Id="CountTkfTopupDefn">
+ 	<query>
+ 	       select Count(*)
+ 		   from prd_tkf_topup_rules
+ 		   where strprodcd = ? and nprodver = ?
+ 	</query>
+ 	</sql>
+ 	<sql Id="CountTkfSurplusShare">
+ 	<query>
+ 	       select Count(*)
+ 		   from prd_tkf_sharing_declr_m
+ 		   where strprodcd = ? and nprodver = ?  
+ 	</query>
+ 	</sql>
+ 	 <sql Id="SearchJointLifePremiumDesc">
+     <query>
+        SELECT pp.strprmtbltyp,pph.strtblcd,pp.strdesc,pph.lprmtbltyphdrseq
+        FROM prd_prmtbltyps pp,prd_prmtbltyp_hdr pph
+        WHERE pph.strprmtbltyp = pp.strprmtbltyp
+        AND pp.strtblname like 'PRD_JNT_%'
+		AND pph.strauthby IS NOT null ORDER BY pp.strprmtbltyp ASC
+     </query>
+   </sql>
+ <!-- End:prathameshs:15-06-2009:TRM_TAKF_PRD_00002 -->
+ <!-- //Start:29/06/2009:Defect 2763:viniths: Added sql Id="GetColumnName"-->
+ <sql Id="GetColumnName">
+ 	<query>
+ 	       select (strdesc || ' '|| initcap(replace(upper(?),upper(strtblcolumn)))) STRCOLUMN
+		from PRD_PRM_BASIS_M
+		where upper(?) LIKE upper(to_char(strtblcolumn||'%') )
+ 	</query>
+ 	</sql>
+ <!-- //End:29/06/2009:Defect 2763:viniths: Added sql Id="GetColumnName"-->
+ <sql Id="GetFromCompanyPrefer">
+    <query>
+    SELECT  strvalue 
+    FROM    com_company_prefer
+    WHERE   nmoduleid = 9
+    AND npreferenceid = 3
+    </query>
+</sql>
+<!-- Start:27/11/2009:Internal:pritirs:Captured formula version -->
+ <sql Id="SearchPremiumFormulaCode">
+     <query>
+        SELECT a.STRPRODCD,b.STRCDDESC,a.NPRODVER 
+        FROM com_formula_param_m a,com_param_system_m b 
+        where a.NFLAG = 1 AND a.NCODEDESC = b.NPARAMCD  
+        AND b.IPARAMTYPECD=9000 
+        AND b.dparamnbr1=?
+        GROUP BY
+        strprodcd,NPRODVER,b.STRCDDESC 
+        order by b.STRCDDESC,a.strprodcd
+     </query>
+   </sql>
+   <!-- End:27/11/2009:Internal:pritirs  -->
+   <sql Id="SettleMentSelect">
+     <query>
+        SELECT * FROM prd_settlement_dtl
+        where strprodcd = ?
+        AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="CountSettlemntDtls">
+ 	<query>
+ 	       select Count(*)
+ 		   from prd_settlement_dtl
+ 		   where strprodcd = ? and nprodver = ?  
+ 	</query>
+ 	</sql>
+ 	
+ <!-- //start:21/JUN/2010:sonalb:1855|UAT|Reviewed by Sonal|aded validation for yr wise declaration -->	
+  <!-- //start:10/MAR/2011:sonalb:000|internal|Reviewed by Sonal|modified query -->	
+ 	 <sql Id="ProductBonusRateChk">
+ 	<query>
+ 	       select Count(1) count
+ 		   from PRD_BON_HDR
+ 		   where CBONTYPE	 = ? 
+ 		 --  and NRISKTYPE	 in ( ?,6)
+ 		   and NFISCALYEAR = ? -1
+ 		   and STRPRODCD = ?
+ 		   AND NPRODVER = ?
+ 	</query>
+ 	</sql>
+ 	<!-- //End:21/JUN/2010:sonalb:1855|UAT|Reviewed by Sonal|aded validation for yr wise declaration -->
+ 	<!-- //start:3-Aug-2010:sonalb:1484|UAT|Reviewed by Sonal|not to chk prev yr data for min year in com_bonus_yr -->
+ 	<sql Id="ProductMINFiscalYr">
+ 	<query>
+ 	       select min(nyear) nminyear from com_bonus_year
+ 	</query>
+ 	</sql>
+ 	<!-- //08-Feb-2011:000|internal|Reveiwed By Sonal|for type R, I and P the year is fetched from fin_financial_year -->
+ 	<sql Id="ProductMINFinFiscalYr">
+ 	<query>
+ 	        SELECT min
+                (nfiscalyear) nminyear
+        FROM fin_financial_year
+        WHERE nfiscalmonth = 0
+ 	</query>
+ 	</sql>
+ 	<!-- //08-Feb-2011:000|internal|Reveiwed By Sonal|for type R, I and P the year is fetched from fin_financial_year -->
+ 	<!-- //End:3-Aug-2010:sonalb:1484|UAT|Reviewed by Sonal|not to chk prev yr data for min year in com_bonus_yr -->
+
+ 	 <!-- Start |11-09-2015 |TRM_MBF_URF129419_174 | added DTEFFFROM AND DTEFFTO -->
+ 	<sql Id="SearchRSATblCode">
+ 	<query>
+ 	select STRRSATBLCD from prd_prmtbltyp_defn 
+ 	where STRPRODCD= ?
+ 	AND NPRODVER = ? 
+ 	AND ? BETWEEN DTEFFFROM AND DTEFFTO
+ 	</query>
+ 	</sql>
+ 	 <!-- End |11-09-2015 |TRM_MBF_URF129419_174 | added DTEFFFROM AND DTEFFTO -->
+ 	<!-- 28/02/2011:UAT|3515|Reviewed By Sonal|Added order by -->
+ 	<sql Id="SearchRSAblRate">
+ 	<query> 	 		 
+	    select prtd.drate dRate,NPOLYEARFROM,NPOLYEARTO,NUNIT
+		from PRD_RSA_TBL_HDR prth, PRD_RSA_TBL_DTL prtd 
+ 		WHERE prth.STRRSATBLCD	 = ?	
+ 		AND prth.LRSAHDRSEQNBR	 = prtd.LRSAHDRSEQNBR	 	
+ 		AND  ? between NTERMFROM and NTERMTO
+ 		AND  ndeferperd = ?
+ 		AND dinterest = ?
+ 		order by  NPOLYEARFROM,NPOLYEARTO
+ 	</query>
+ 	</sql>
+ 	 	<!-- 28/02/2011:UAT|3515|Reviewed By Sonal|Added order by -->
+ 	
+ 	<sql Id="SearchRSATableCode">
+     <query>
+        select STRRSATBLCD 
+        from PRD_RSA_TBL_HDR
+        where STRAUTHBY IS NOT NULL 
+        ORDER BY STRRSATBLCD
+     </query>
+   </sql>
+
+ 	 <!-- Start:08/07/2010:gauravpd:Defect-2258-UAT| Query added to bypass bonus type check -->
+ 	 <sql Id="SearchAuthProdForRiskTypeOthers">
+     <query>
+        SELECT strprodcd,nprodver 
+		FROM prd_key_info 
+		WHERE nprodstat = ? 
+		AND nrisktype = ?
+      </query>
+   </sql>
+   <!-- End:08/07/2010:gauravpd:Defect-2258-UAT| Query added to bypass bonus type check -->
+<!-- Start:showbhik:16/05/2011:E2E:3763 -->
+   <sql Id="GetFormulaDesc">
+   <query>
+   SELECT a.STRPRODCD formula_cd,b.STRCDDESC formula_desc,a.NPRODVER formula_ver
+        FROM com_formula_param_m a,com_param_system_m b 
+        where a.NFLAG = 1 AND a.NCODEDESC = b.NPARAMCD  
+        AND b.IPARAMTYPECD=9000 
+        AND b.dparamnbr1=? and a.STRPRODCD=? and a.NPRODVER=?
+        GROUP BY
+        strprodcd,NPRODVER,b.STRCDDESC 
+        order by b.STRCDDESC,a.strprodcd
+   </query>
+   </sql>
+   <!-- End:showbhik:16/05/2011:E2E:3763 -->
+   
+   <!-- start:TRM_MBF_280_00002:CR280:29/12/2011:mrunal:added -->
+   <!-- start:TRM_MBF_280_00002:CR280:09/01/2012:mrunal:added new columns NTERMFROM and NTERMTO -->
+   <sql Id="SearchScaleFactor">
+   	<query>
+   		SELECT 
+   			STRPRODCD, 
+   			NPRODVER,
+   			NUNPINSTFRM,
+   			NUNPINSTTO,
+   			DFACTOR,
+   			STRCREATEDBY,
+   			DTCREATED,
+   			DTUPDATED,
+   			STRUPDATEDBY,
+   			LSCALEFCTRSEQ,
+   			NTERMFROM,
+   			NTERMTO
+   		FROM
+   			PRD_SCALE_FACTOR
+   		WHERE
+   			STRPRODCD = ?
+   		AND
+   			NPRODVER = ? 
+   	</query>
+   </sql>
+   <!-- end:TRM_MBF_280_00002:CR280:09/01/2012:mrunal:added new columns NTERMFROM and NTERMTO -->
+   <!-- end:TRM_MBF_280_00002:CR280:29/12/2011:mrunal:added -->
+   <!-- CR 280 TRM_MBF_280_00002 START-->
+   <sql Id ="SelectPRDAllocRate">
+   <query>
+   SELECT * from PRD_ALLOC_RATES  WHERE strprodcd = ? AND nprodver = ?
+   </query>
+   </sql>
+   
+   <sql Id="AdminFeeSearch">
+   <query>
+     SELECT * FROM PRD_ADMIN_FEE_M
+   WHERE strprodcd = ? AND nprodver = ?
+  </query>
+   </sql>
+   
+   
+    //start:31-01-2012: Id-5329:Swati:- To find Start year of the product 
+     <sql Id="ProductStartYear">
+   <query>
+      select nfiscalyear 
+      from fin_financial_year a, prd_key_info p
+      where p.strprodcd= ? and p.nprodver= ?
+      and p.dtefffrom between a.dtstart
+      and a.dtend and a.nfiscalmonth != 0
+  </query>
+   </sql>
+   
+   //end:31-01-2012: Id-5329:Swati:-To find Start year of the product
+   
+   	 <!-- CR 280 TRM_MBF_280_00002 END-->
+   	 <!--Start:CR 335|Lien Master for SI -->
+  <sql Id="SelectAllLienSIDtl">
+     <query>
+       SELECT DISTINCT PJH.LJUVHDRSEQ
+       ,PJH.STRPRODCD
+       ,PJH.NPRODVER 
+       ,cpsm.STRCDDESC STRJUVBENTYPEDESC
+       FROM PRD_JUV_HDR PJH,COM_PARAM_SYSTEM_M CPSM
+       WHERE CPSM.IPARAMTYPECD = 9083
+       AND  PJH.NJUVBENTYPE = CPSM.NPARAMCD
+       ORDER BY PJH.STRPRODCD ASC
+     </query>
+   </sql>
+   <sql Id="SelectPrdLienSIHdr">
+     <query>
+       SELECT PJH.LJUVHDRSEQ 
+       ,PJH.STRPRODCD
+       ,PJH.NPRODVER 
+       ,PJH.NJUVBENTYPE
+       FROM PRD_JUV_HDR PJH
+       WHERE PJH.LJUVHDRSEQ = ? 
+     </query>
+   </sql>
+   <sql Id="SelectPrdLienSIDtl">
+     <query>
+     SELECT LJUVDTLSEQ
+		      ,NAGEFROM
+		      ,NAGETO
+		      ,DRATE
+		FROM PRD_JUV_DTL
+		where LJUVHDRSEQ = ?
+     </query>
+   </sql>
+   <sql Id="selectJuvHdrSeq">
+	<query>
+   	   SELECT PRD_JUV_HDR_SEQ.NEXTVAL FROM DUAL
+    </query>
+   </sql>
+   <sql Id="selectDupCheck">
+   	<query>
+   		 SELECT COUNT(*) 
+   		 FROM PRD_JUV_HDR 
+       	 where STRPRODCD = ? and NPRODVER = ?
+   	</query>
+   </sql>
+   <sql Id="selectPrdExistchk">
+   	<query>
+   		 SELECT COUNT(*) 
+   		 FROM prd_key_info 
+       	 where STRPRODCD = ? and NPRODVER = ?
+   	</query>
+   </sql>
+   <!--End: :CR 335|Lien Master for SI -->
+   <!-- Start|CR362|TRM_MBF_362_0043|Ram|Get Non Annuity Premium Rate Table values-->
+   <sql Id="SearchNAnnTblCodes">
+   	<query>
+   		SELECT pph.strtblcd, pph.strtblcd||'~'||pp.strdesc strdesc
+   		FROM prd_prmtbltyps pp,prd_prmtbltyp_hdr pph 
+   		Where	Pph.Strprmtbltyp = Pp.Strprmtbltyp 
+   			And Pph.Strauthby Is Not Null 
+   			And Pp.Ntbltypcd = 8 -- system parameter 3048
+
+   	</query>
+   </sql>
+   <!-- End|CR362|TRM_MBF_362_0043|Ram|Get Non Annuity Premium Rate Table values-->
+<!-- Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+	<sql Id="ProductBonusRateCheck">
+ 	<query>
+ 	       select Count(1) count
+ 		   from PRD_BON_HDR
+ 		   where CBONTYPE	 = ? 
+ 		   and STRPRODCD = ?
+ 		   AND NPRODVER = ?
+ 	</query>
+ 	</sql>  
+  	<!-- End:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+ <!--Start:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added SAM Factor for Elite Investment product-->
+   	<sql Id="SelectPRDSAMFactor">
+   	<query>
+		SELECT LSAMFACTSEQ,STRPRODCD,NPRODVER,NAGEFROM,NAGETO,NSAMFACTOR,LSAMFACTSEQ FROM PRD_SAM_FACTOR WHERE STRPRODCD=? AND NPRODVER=?
+   	</query>
+   </sql>
+   <!--End:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added SAM Factor for Elite Investment product-->  
+   
+   <!--Start:CR-365B|Tracebility No.:TRM_MBF_CR365B_0070|ravis|25-07-2013|added for CR-365B notional table code -->
+   <sql Id="SearchNotionalPremiumTableCode">
+   	<query>
+   	SELECT PP.STRPRMTBLTYP,PPH.STRTBLCD,PP.STRDESC,PPH.LPRMTBLTYPHDRSEQ
+    FROM PRD_PRMTBLTYPS PP,PRD_PRMTBLTYP_HDR PPH
+    WHERE PPH.STRPRMTBLTYP = PP.STRPRMTBLTYP
+    AND PP.NTBLTYPCD=9 
+	AND PPH.STRAUTHBY IS NOT NULL 
+	ORDER BY PP.STRPRMTBLTYP ASC
+   	</query>
+   </sql>
+   <!--End:CR-365B|Tracebility No.:TRM_MBF_CR365B_0070|ravis|25-07-2013|added for CR-365B notional table code -->
+<!--Start:CR264:1-oct-2013:TRM_MBF_CR264_0067:Added new screen for Takaful rate master.--> 
+   <sql Id="TakafulRateDuplicateCheck">
+     <query>
+           SELECT LWHTSEQ
+            FROM intf_withholding_tax_dtl
+            WHERE 1=1
+     </query>
+   </sql>
+   <sql Id="TakafulRateListSearch">
+     <query>
+           SELECT * 
+           FROM intf_withholding_tax_dtl
+           WHERE 1=1  
+     </query>
+   </sql>
+      <sql Id="TakafulRateSearch">
+     <query>
+           SELECT   *
+            FROM intf_withholding_tax_dtl
+            WHERE LWHTSEQ = ?
+     </query>
+   </sql>
+   <!--End:CR264:1-oct-2013:TRM_MBF_CR264_0067:Added new screen for Takaful rate master.-->   
+     <!-- Start:27-NOV-2013:CR389:TRM_MBF_CR389_0085:SunilN:added for Investment Link - Top up allocation rate details -->
+   <sql Id="GetTopUpAllocRates">
+     <query>
+		SELECT 
+		  LTOPUPALLOCRATESEQ, 
+		  STRPRODCD,
+		  NPRODVER,
+		  NTERMFROM, 
+		  NTERMTO,
+		  NPOLYRFROM,
+		  NPOLYRTO,
+		  NISSTAFF,
+		  DALLOCRATE
+		FROM PRD_TOPUP_ALLOC_RATES
+		WHERE STRPRODCD = ? AND NPRODVER = ?
+		ORDER BY LTOPUPALLOCRATESEQ
+     </query>
+   </sql>   
+   <!-- End:27-NOV-2013:CR389:TRM_MBF_CR389_0085:SunilN:added for Investment Link - Top up allocation rate details -->   
+ <!--Start:12-02-14|CR#395-P2|TRM_MBF_CR395P2_0099|Yash|Change in affliction setup to capture products for which SA to be reduced -->
+  <sql Id="SelectAfflnProdList">
+     <query>
+		select LREDUCTIONPRODMAPSEQ
+				,LREDUCTIONDTLSEQ
+				,Strprodcd
+				,Nprodver
+				From Prd_Affln_Ben_Redn_Prd_Map
+		WHERE Lreductiondtlseq = ?
+				ORDER BY Strprodcd
+     </query>
+   </sql>   
+ <!--End:12-02-14|CR#395-P2|TRM_MBF_CR395P2_0099|Yash|Change in affliction setup to capture products for which SA to be reduced -->   
+  <!--Start:18-MAR-2015|CR458-TRM_MBF_CR458_160|SunilN|added to get Min Max Loan Amount Details -->
+  <sql Id="GetMinMaxLoanAmountDetails">
+     <query>
+		SELECT 
+			LMINMAXLASEQ,
+			STRPRODCD,
+			NPRODVER,
+		    NEAGEFROMMALE,
+			NEAGETOMALE,
+			NEAGEFROMFEMALE,
+			NEAGETOFEMALE,
+			DMINLOANAMT, 
+			DMAXLOANAMT,
+			STRCREATEDBY,
+			DTCREATED,
+			STRUPDATEDBY,
+			DTUPDATED
+		FROM PRD_MINMAX_LOAN_AMT
+		WHERE STRPRODCD = ? AND NPRODVER = ? 
+		ORDER BY LMINMAXLASEQ
+     </query>
+   </sql>   
+ <!--End:18-MAR-2015|CR458-TRM_MBF_CR458_160|SunilN|added to get Min Max Loan Amount Details -->  
+ <!--Start:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group -->
+  	<sql Id="SearchPRDSAGrpDetails">
+		<query>
+			select 
+				LGRPPRDSEQ,
+				STRGRPID,
+				STRPRODCD,
+				NPRODVER,
+				NGENDER,
+				NENTRYAGEFROM,
+				NENTRYAGETO,
+				DMAXPARAMVALUE 
+			from PRD_MAXSA_SP_PARAM_DTL
+			where STRGRPID = ? 
+			and STRPRODCD = ? 
+			and NPRODVER = ?
+		</query>
+  	</sql>
+  	
+  	<sql Id="PrdGetMaxSADtl">
+		<query>
+			select DMAXVALUE from PRD_MAXSA_SP_DTL
+			where STRGRPID = ?
+		</query>
+  	</sql>
+  	
+  	
+  <!--End:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group -->
+ <!-- Start |11-09-2015 |TRM_MBF_URF129419_174 | added new query to fetch product premium details list -->
+ <!-- Start:17/6/2017:Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1|added new field nntblformlflg,strnformlcd,NNFORMULAVER,strnformuladesc for notional premium-->
+ <!-- Start TRM_MBF_URF19496_225 -->
+ <!-- Start TRM_MBFURF_CLTA_CLTT_23816_265_Enhenecment -->
+ <sql Id="SearchProductPrmMapList">
+     <query>
+        SELECT strprodcd,nprodver,ntblformlflg,strformlcd,lprmtbltyphdrseq,
+        nfemalesetbackage,nmalesetbackage,stroetype,dtcreated,strcreatedby,
+	dtupdated,strupdatedby,npremroundbasis,strextraprmtblcd,NJNTLFEFCTTBLCD,NFORMULAVER,com_get_formula_desc(strformlcd,NFORMULAVER) strformuladesc,
+	nRSATblFormlFlg, STRRSATBLCD,LNPRMTBLTYPHDRSEQ,STRNEXTRAPRMTBLCD,DTEFFFROM,DTEFFTO,lprmtbltypdefnseq,nntblformlflg,strnformlcd,NNFORMULAVER,com_get_formula_desc( strnformlcd,nnformulaver) strnformuladesc
+	,STRCOITBLCD,NAUTOOCCEXTRA
+        FROM prd_prmtbltyp_defn 
+       WHERE strprodcd = ?
+       AND nprodver = ?
+       order by lprmtbltypdefnseq
+     </query>
+   </sql>
+   <!-- End TRM_MBFURF_CLTA_CLTT_23816_265_Enhenecment -->
+   <!-- End TRM_MBF_URF19496_225 -->
+ <!-- End |11-09-2015 |TRM_MBF_URF129419_174 | added new query to fetch product premium details list -->
+ 
+   <!-- START:URF136967: 21/3/2017:LokeshR:Added for Affln detail -->
+ 	<sql Id="SelectAfflictionDtl">
+     <query>SELECT LEVENTAFFLNSEQ, LEVENTBENSEQ, LEVENTMAPSEQ, STRAFFLNSCHEDNBR, NEVENTAGEFROM, NEVENTAGETO, DTCREATED, STRCREATEDBY
+	    FROM   prd_event_ben_map_affln
+	    WHERE  LEVENTBENSEQ = ? AND  LEVENTMAPSEQ  = ?
+     </query>
+   </sql>
+   <!-- END:URF136967: 21/3/2017:LokeshR:Added for Affln detail -->
+ <!-- Start TRM_MBF_URF19496_225 -->
+ <sql Id="SearchCOITableCode">
+     <query>
+        select strcoitblcd 
+        from prd_coi_hdr
+		where strauthby is not null
+		order by strcoitblcd
+     </query>
+   </sql>
+ <!-- End TRM_MBF_URF19496_225 -->
+   <!-- Start:15-09-2017:TRM_MBF_URF19496_225:Added for Medical Deductible Limit -->
+   <sql Id="SearchPRDDeductLimitDetails">
+		<query>
+			SELECT 
+				LMEDDEDLIMITSEQ,
+				NDEDUCTIONLIMIT
+			FROM PRD_MUL_MED_DED_LIMIT
+			WHERE STRPRODCD = ? 
+			AND NPRODVER = ?
+		</query>
+  	</sql>
+ 
+  	<sql Id="GetLimitCount">
+  		<query>
+	  		SELECT COUNT(1) COUNT
+			FROM PRD_MUL_MED_DED_LIMIT
+			WHERE LMEDDEDLIMITSEQ = ?  		
+  		</query>
+  	</sql>
+   <!-- End:15-09-2017:TRM_MBF_URF19496_225:Added for Medical Deductible Limit -->
+   
+   <!-- Start:02-Jan-2018:TRM_MBF_URF20283_230:Added to display Component Details -->
+   <sql Id="GetAllProdCodes">
+  		<query>
+	  		SELECT DISTINCT STRPRODCD 
+ 			FROM PRD_KEY_INFO  
+ 			ORDER BY LOWER(STRPRODCD)  		
+  		</query>
+  	</sql>
+  	
+  	<sql Id="GetAllProdVersions">
+  		<query>
+	  		SELECT DISTINCT NPRODVER 
+ 			FROM PRD_KEY_INFO  
+ 			ORDER BY LOWER(NPRODVER)  		
+  		</query>
+  	</sql>
+  	
+  	<sql Id="GetAllCmpntDtls">
+  		<query>
+	  		SELECT LPRDCOMPONENTSEQ, STRPRODCD, NPRODVER, NTYPE,
+	  		STRCOMPONENTCD, DPERCENTAGE, DAMOUNT
+ 			FROM PRD_COMPONENT_M  
+ 			WHERE STRBASEPLANCDCD = ?
+ 			AND NBASEPLANVER = ?  		
+  		</query>
+  	</sql>
+  	
+  	<sql Id="GetAllComponentCodes">
+  		<query>
+	  		SELECT DISTINCT STRCOMPONENTCD FROM COM_COMPONENT_M
+ 			ORDER BY LOWER(STRCOMPONENTCD)  		
+  		</query>
+  	</sql>
+   <!-- End:02-Jan-2018:TRM_MBF_URF20283_230:Added to display Component Details -->
+   <!-- Start:30/05/2018:Ashish R: TRM_MBF_CR372_239: Code Added for Golden Retirement -->
+   <sql Id="FundListSearch">
+     <query>
+          SELECT pbh.lbonhdrseq,pbh.dtefffrom,pbh.dteffto,pbh.strprodcd,pbh.nprodver,
+            pbh.STRFUNDNAME,cpsm1.strcddesc nbonbas,pbh.nbonunit
+            FROM prd_bon_hdr pbh,com_param_system_m cpsm1 
+            ,prd_key_info pki
+            WHERE pki.strprodcd = pbh.strprodcd 
+            AND   pki.nprodver = pbh.nprodver 
+            AND   cpsm1.iparamtypecd = 1037            
+            AND   pbh.CBONTYPE ='J' -- Golden retirement             
+            AND   pbh.nbonbas = cpsm1.nparamcd
+   
+     </query>
+   </sql>
+   <sql Id="InvestmentHdrSearch">
+     <query>
+          SELECT   cbontype,STRFUNDNAME,STRFUNDCD,STRPRODCD,NPRODVER,NACCYEARFROM,NACCYEARTO,NPAYYEARFROM,NPAYYEARTO
+          ,NGMCPMT_PERC,nbonbas,nbonunit,dtcreated,strcreatedby,dtupdated,strupdatedby,
+            strverifiedby,dtverified,strauthby,dtauth
+            FROM prd_bon_hdr
+            WHERE lbonhdrseq = ?
+     </query>
+   </sql>
+   <sql Id="FundDtlSearch">
+     <query>
+             SELECT lbondtlseq,npolyearfrom,npolyearto,dactualbonrate,NCALCDATE,nstatus
+            FROM prd_bon_dtl
+            WHERE lbonhdrseq = ?
+            ORDER BY npolyearfrom  ASC
+     </query>
+   </sql>
+<!-- End:30/05/2018:Ashish R: TRM_MBF_CR372_239: Code Added for Golden Retirement -->
+<!-- Start:14/06/2018:Ashish R: TRM_MBF_CR372_239: Code Added for Golden Retirement -->
+ <sql Id="InvestmentHdrDelete">
+     <query>
+          select count(NSTATUS) NSTATUS  from prd_bon_dtl where LBONHDRSEQ=? and NSTATUS=3
+     </query>
+   </sql>
+ <sql Id="InvestmentDtlDelete">
+     <query>
+          select count(NSTATUS) NSTATUS  from prd_bon_dtl where LBONDTLSEQ=? and NSTATUS=3
+     </query>
+   </sql>
+<!-- End:14/06/2018:Ashish R: TRM_MBF_CR372_239: Code Added for Golden Retirement -->
+
+<!-- Start:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added for Loyalty bonus changes  -->
+	<sql Id="GetIsJumboProd">
+     <query>
+             SELECT COUNT(*) JUMBO 
+             FROM NB_PRD_JUMBO_TSAR_CALC_M
+			 WHERE STRPRODCD = ? AND NPRODVER = ?
+     </query>
+   </sql>
+   
+   <!-- Start:10-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added EFFCTIVEFROM,EFFECTIVETO,UNIT : Added for Loyalty bonus change enhancement -->
+   <!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-Start Added STRFUNDTYPE-->
+   <sql Id="GetJumboLoyaltyBonus">
+	<query>
+ 		SELECT LLOYATBONBSEQ,STRPRODCD,NPRODVER,BASIS
+		,NPOLICYYEARFROM,NPOLICYYEARTO,FREQ,RATE,EFFCTIVEFROM,EFFECTIVETO,UNIT,STRFUNDTYPE
+		FROM PRD_LOYALT_BON_BENIF_DTL
+		WHERE STRPRODCD = ? AND NPRODVER = ?
+	</query>
+	</sql>
+	<!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-End Added STRFUNDTYPE-->
+	<!-- End:10-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added EFFCTIVEFROM,EFFECTIVETO,UNIT : Added for Loyalty bonus change enhancement -->
+	<!-- End:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added for Loyalty bonus changes -->
+	
+	<!-- Start:10-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Alteration Error -->
+	<sql Id="getPrmTermFromPrmPmtYears">
+	<query>
+ 		SELECT	NPRMTERM
+		FROM   PRD_LMT_PMT_TERM
+		WHERE  STRPRODCD = ?
+		AND    NPRODVER  = ?
+        AND NPRMPMTYEARS=?
+	</query>
+	</sql>
+	<!-- End:10-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Alteration Error -->
+	<!-- Starts : 29/03/2019 : URF_23819 : Minimum Allocation Rates MAR CR Changes : QC Defect ID 8269-->
+	<sql Id="GetIsEnricherProd">
+     <query>
+     		 SELECT PI1.NENRICHERAPPLC ENRICHER 
+			 FROM PRD_INFO_1 PI1 
+			 WHERE PI1.STRPRODCD = ? AND PI1.NPRODVER = ?
+     </query>
+	</sql>
+     <!-- Ends : 29/03/2019 : URF_23819 : Minimum Allocation Rates MAR CR Changes : QC Defect ID 8269-->
+<!-- Start:Ashish Rai :HPQC Defect :24911 :Change of Payment Mode - Trigger Recalculation of Premium for Non ILK product suspected by Jumbo Phase 2 code-->
+	<sql Id="GetIsChangeOfMode">
+	<query>
+ 		SELECT COUNT(*) changeofpayment FROM prd_info_4 WHERE strprodcd = ? AND nprodver = ? AND nprmtype = 2
+	</query>
+	</sql>
+	<!--End:Ashish Rai :HPQC Defect :24911 :Change of Payment Mode - Trigger Recalculation of Premium for Non ILK product suspected by Jumbo Phase 2 code-->
+  <!-- START|Athsal:30/03/2020:MAR Takaful:Phase 1|Loyalty Bonus Sreen Issue|TRM_MBF_URF27161_295_P1 -->
+   <sql Id="isLoyaltyBonusApplForMarTakaful">
+     <query>
+		Select count(*) count from com_param_system_m
+		where STRPARAM1=?
+		AND STRPARAM2=?
+		AND IPARAMTYPECD=9268
+     </query>
+   </sql>
+<!-- End|Athsal:30/03/2020:MAR Takaful:Phase 1|Loyalty Bonus Sreen Issue|TRM_MBF_URF27161_295_P1-->
+  <!-- Starts : 13/08/2019 : URF_23819_P2 : Minimum Allocation Rates MAR CR Changes Phase 2.1 :Defect 9700 -->
+   <sql Id="isBasePlanMARSetupExistPSApplc">
+   	<query>
+		SELECT COUNT(*) count FROM PRD_MAR_SETUP_M WHERE STRPRODCD=? AND NPRODVER=? AND NVL(NISPSAPPLIC,0) = 1 
+	</query>
+   </sql>
+<!-- Ends : 13/08/2019 : URF_23819_P2 : Minimum Allocation Rates MAR CR Changes Phase 2.1 ::Defect 9700 -->
+
+<!-- Start : 10/09/2019 : TRM_MBF_URF23819_PHASE_2.1 : MAR PH2 - Claims - Jira - 11129-->
+   <sql Id="isLoyaltyBonusAppl">
+     <query>
+		Select count(*) count from com_param_user_m
+		where STRPARAM1=?
+		AND STRPARAM2=?
+		AND IPARAMTYPECD=9245
+     </query>
+   </sql>
+<!-- End : 10/09/2019 : TRM_MBF_URF23819_PHASE_2.1 : MAR PH2 - Claims - Jira - 11129-->
+
+<!-- Start : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 -->
+	<sql Id="InvCompDetailsSearchEvent">
+     <query>
+		SELECT PEM.NEVENTTYPE NEVENTTYPE, 
+		PEBM.NBENTYPE NBENTYPE, 
+		PEM.LEVENTMAPSEQ LEVENTMAPSEQ, 
+		PEBM.LEVENTBENSEQ LEVENTBENSEQ 
+		FROM PRD_EVENT_MAP PEM, 
+		PRD_EVENT_BEN_MAP PEBM 
+		WHERE PEM.LEVENTMAPSEQ = PEBM.LEVENTMAPSEQ 
+		AND PEM.STRPRODCD = ? 
+		AND PEM.NPRODVER = ?
+     </query>
+   </sql>
+	<sql Id="InvCompDetailsSearch">
+     <query>
+		SELECT PEM.NEVENTTYPE NEVENTTYPE, 
+    	PEBM.NBENTYPE NBENTYPE, 
+    	PEM.LEVENTMAPSEQ LEVENTMAPSEQ, 
+    	PEBM.LEVENTBENSEQ LEVENTBENSEQ 
+		FROM PRD_EVENT_MAP PEM,
+		PRD_EVENT_BEN_MAP PEBM 
+		WHERE PEM.LEVENTMAPSEQ = PEBM.LEVENTMAPSEQ
+		AND PEM.STRPRODCD = ?
+		AND PEM.NPRODVER = ?
+		AND PEM.NEVENTTYPE = ?
+		AND (PEBM.NGRNDOFEVENT,PEBM.NBENTYPE, PEBM.LEVENTBENSEQ)
+        IN (
+        SELECT MIN(NGRNDOFEVENT), NBENTYPE, MIN(LEVENTBENSEQ)
+        FROM PRD_EVENT_BEN_MAP PEBM1
+        WHERE PEBM1.LEVENTMAPSEQ = PEBM.LEVENTMAPSEQ
+        GROUP BY NBENTYPE
+        )
+     </query>
+	</sql>
+	<sql Id="InvCompDetailsSearchBaseTbl">
+     <query>
+		SELECT PBCM.NEVENTTYPE NEVENTTYPE, 
+		PBCM.NBENTYPE NBENTYPE, 
+		PBCM.LEVENTMAPSEQ LEVENTMAPSEQ, 
+		PBCM.LEVENTBENSEQ LEVENTBENSEQ, 
+		PBCM.LMAPSEQ LMAPSEQ,
+		PBCM.NCOMPCD NCOMPCD,
+        PBCM.NCOMPFLAG NCOMPFLAG
+		FROM PRD_BEN_COMP_MAP PBCM 
+		WHERE PBCM.STRPRODCD = ? 
+		AND PBCM.NPRODVER = ? 
+		AND PBCM.NEVENTTYPE = ?
+     </query>
+	</sql>
+	<sql Id="InvCompRecordSearch">
+    <query>
+           SELECT PBCM.STRPRODCD STRPRODCD, PBCM.NPRODVER NPRODVER FROM PRD_BEN_COMP_MAP PBCM WHERE PBCM.LMAPSEQ=?
+    </query>
+  </sql>
+  <sql Id="getEventMapSeq">
+    <query>
+           SELECT LEVENTMAPSEQ FROM PRD_EVENT_MAP WHERE STRPRODCD=? AND NPRODVER=? AND NEVENTTYPE=?
+    </query>
+  </sql>
+  <sql Id="getEventBenSeq">
+    <query>
+           SELECT LEVENTBENSEQ FROM PRD_EVENT_BEN_MAP WHERE LEVENTMAPSEQ IN (SELECT LEVENTMAPSEQ FROM PRD_EVENT_MAP WHERE STRPRODCD=? AND NPRODVER=? AND NEVENTTYPE=?) AND NBENTYPE = ?
+    </query>
+  </sql>
+<!-- End : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 -->
+	
+	</sql-root>

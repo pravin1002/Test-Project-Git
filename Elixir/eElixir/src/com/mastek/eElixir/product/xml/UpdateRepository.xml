@@ -1,0 +1,1824 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sql-root SYSTEM "SqlRepository.dtd">
+<!--  Change History:
+ * 
+ * SR No.| Modified By   | Modification Date | Description
+ *
+ * 1	 |Ketan More	 |02/07/2018		      | Jumbo ILP Surrender Charges Change - TRM_URF_21454_56_57_241
+ * 2     |Ashish R       |30/05/2018              | TRM_MBF_CR372_239| Code Added for Golden Retirement
+ * 3	 |Ketan More	 |02/07/2018		      | Jumbo ILP Surrender Charges Change - TRM_URF_21454_56_57_241
+ * 4     |Athsal Nadar   |20/04/2021          	  |TRM_MBF_URF27389_311_P2|Protect 88 PH2
+ * 5     |Pranav Mehra   |23/02/2022              | ECNURF_316_EPF_PHASE2| Added column in Id="Update_PRD_INFO_1
+ * 6     |Pranav         |01/03/2022              | added nprmpmtyears,npolterm: FSD_MaxiPro_Campaign_v1.1
+ * 7     |Pranav         |18-4-2022               | Added for Waiting Period and Waiting Unit
+ * 8     |Pranav         |26-04-2022              | Adding DPERC in Variable Premium Screen
+ * 9     |Pranav         |01-06-2022              | TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility
+ * 10     |Manjunath H   |10-09-2022	          |TRM_MBF_URF_24268_338_MULT_WKL_RATE|Addition of new fields.
+ * 11    |Manjunath H    |10-09-2022	          |TRM_MBF_URF_24268_338_MULT_WKL_RATE|Addition of new fields.
+ * 12    |Rohit#10       |04-05-2023              |TRM_MBF_ECNURF_1379_345_P1||update for product unit rule for epf phase-2
+ * 13    |SanketP        |23-06-2023              |TRM_MBF_URF_24268_346|Loyalty Bonus CR|Added Fundtype Field
+ * 11    |Rohit#23       |04-08-2023              |TRM_MBF_ECNURF_1519_350_P1||Added NISCASHPAYCOMMAGEAPPL,NCASHPAYCOMMAGE
+
+-->
+<sql-root>
+<!-- start:08/04/2009:TRM_MBF_POLBEN_00001:sonalb:addedd nIsDivApplc-->
+   <sql Id="UpdateProductEntry">
+	 <query>UPDATE prd_key_info
+				set nprodtype=?,
+				nrisktype=?,
+				strcurrcd=?,
+				cbontype=?,
+				strriskcd=?,
+				dtefffrom=?,
+				strcountrycd=?,
+				strprodname=?,
+				nsplfeatureflg=?,
+				strstatecd=?,
+				strprodline=?,
+				strproddesc=?,
+				nisrta=?,
+				nisjuvnpol=?,
+				ncompanyind=?,
+				nIsTakafulProd=?,
+				strUpdatedBy=?,
+				dtUpdated=nvl(?, sysdate),
+				nprodstat=?,
+				strprodothname =?,
+				nIsDivApplc=?
+				where strprodcd=? 
+				and nprodver=?</query>
+   </sql>
+   <!-- end:08/04/2009:TRM_MBF_POLBEN_00001:sonalb-->
+   <!-- //start:01/02/2010:Sonalb:000|SIT|Reviewed By Sonal|add is commission pay on premium flag -->
+   <!--  //start:13/05/2010:sonalb:1442|UAT|Reviewed By sonal|agged flag for TP age, nMANDTHRDPARTYAGE -->
+   <!-- Start:12/08/2014:Suresh Singh:TRM_MBF_CR406_0118_Drop1|CR406|Added NISPRODGSTAPPL field -->
+   <!-- vignesh -->
+   <!-- Start:17/6/2017:Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1|To update ngsrtype -->
+<!-- Start TRM_MBF_URF18729_224_P2 added column NISVARCOMMAPPL -->
+   <!-- Start:31-May-2018:TRM_URF_21454_56_57_241:Jumbo ILP : Added columns NENRICHERAPPLC,NISJUMBOPRD,NMINSUSTAINPERIOD -->
+<!-- Start:28-Oct-2021:TRM_MBF_ ECNURF_81:Family Plan Development -->
+<!-- start:29-nov-2021|govind|TRM_MBF_ ECNURF_81:Family Plan Development|Removed NMAXPOLAPPLC -->
+   <!-- Start : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 : Added NINVCOMPAPPLC-->
+   <!-- Start:23-Feb-2022:Pranav:ECNURF_316_EPF_PHASE2:Added Column NNONSTDSURSET -->
+   <sql Id="Update_PRD_INFO_1">
+	<query>UPDATE prd_info_1 SET niscmpnyreimmedfee = ? , nisrenewappl = ?, npolyearloan = ? , nisriappl = ?,
+		nisavlfornb = ? , nispolfeeappl = ? , nispolloanappl = ? , niscnvappl = ? , npaycommonxprm = ?,
+		dcoefficientrate = ?,nissteprateappl = ?,nsteprateperd = ?,nsteprateperdunit = ?,npolcomcopt = ?,nritpdbappl =?,nwopformcd =?,
+		strupdatedby = ? , dtupdated = nvl(?, sysdate),dtfixedcomc = ?,dtfixedexpiry = ?,dtpolgenafter = ?,niswaiverofprmprod =?,nisunitbasedprod =?,
+		damntperunit = ?,nallowpolissubfrcomc = ?,nisallowthirdparty = ?,strsiscd = ?,nfctfndfrmreqd=?,nisAsscwithepf=?, NPAYCOMMIONPRM = ?, 
+		NMANDTHRDPARTYAGE = ?,NISPRODGSTAPPL=?,ngsrtype=?
+		,NISVARCOMMAPPL = ?
+		,NENRICHERAPPLC = ?,NSUSTAINABILITYAPPL = ?,NMINSUSTAINPERIOD = ?,NINVCOMPAPPLC = ?
+                ,NFAMILYPLANAPPLC = ? , NCOHORTYRTAPPLC = ?,NNONSTDSURPLUS = ?
+	       WHERE strprodcd = ? and nprodver = ?
+	</query>
+   </sql>
+   <!-- End:23-Feb-2022:Pranav:ECNURF_316_EPF_PHASE2:Added Column NNONSTDSURSET -->
+   <!-- End : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 : Added NINVCOMPAPPLC-->
+<!-- end:29-nov-2021|govind|TRM_MBF_ ECNURF_81:Family Plan Development|Removed NMAXPOLAPPLC -->   
+<!-- End:28-Oct-2021:TRM_MBF_ ECNURF_81:Family Plan Development -->
+   <!-- End:31-May-2018:TRM_URF_21454_56_57_241:Jumbo ILP : Added columns NENRICHERAPPLC,NISJUMBOPRD,NMINSUSTAINPERIOD -->
+<!-- End TRM_MBF_URF18729_224_P2 added column NISVARCOMMAPPL -->
+   <!-- End:12/08/2014:Suresh Singh:TRM_MBF_CR406_0118_Drop1|CR406|Added NISPRODGSTAPPL field -->
+   <!--  //End:13/05/2010:sonalb:1442|UAT|Reviewed By sonal|agged flag for TP age -->
+   <!-- start :28/01/2008:MayBanPH1:sonalb:<PRD_BASIC_DEFECT_FIX>:to remove nexpiryagefemale, nexpiryagemale -->
+<!--Start:14/12/2009:SIT 524:pritirs:handling for ODL and ODP products--> 
+<!-- //End:01/02/2010:Sonalb:000|SIT|Reviewed By Sonal|add is commission pay on premium flag --> 
+ <!-- Start:27/11/2014:TRM_MBF_CR435_0145_PS:Vishakha:Added Code to get NHOLDINGBASIS -->
+  <!-- Start:17/6/2017:Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1|To update NMAXAGE -->
+  <!--   //Start 20|03|2019 |TRM_MBFURF_CLTA_CLTT_23816_265  -->
+  <!-- Start|Sweta|30/12/2020 |Mar Takaful Ph2 |URF27161 -->
+    <!-- Start:12-07-2023||Rohit#23||TRM_MBF_ECNURF_1519_350_P1||Added NISCASHPAYCOMMAGEAPPL,NCASHPAYCOMMAGE -->
+   <sql Id="Update_PRD_INFO_2">
+	<query>UPDATE prd_info_2 SET nisfixterm = ?, ngenderapplflg = ?, nnbroflives = ?, nprmceaseagemale = ?,
+		nprmceaseagefemale = ?, nagecalcbasis = ?, njntagecalcbasis = ? , nminentryagechild = ?, nminterm = ?,
+		nmaxterm = ?, nminentryageunit = ?, nvestage = ?, nparticipatingage = ?, nmatagemale = ?, nmatagefemale = ?,
+		lruleseq = ?, nmindefermentperd = ?, nmaxdefermentperd = ?, nminrepmtperd = ?,
+		nmaxassurance = ?, nminpayoreage = ?, nmaxpayoreage = ?, nisagediffappl =?, nminagediff =?,
+		strupdatedby = ? , dtupdated = nvl(?, sysdate), ntermunit = ?, strschedrepcal = ?, dmaxinterestrate = ?, niszeropymntappl = ?,
+		nisbaloonpymntappl = ?, nisservintyrsappl = ?,nrestfreq = ?,nminservintyrs = ?,nmaxservintyrs = ?,dmininterestrate = ?,
+		NISTERMRULEAPPL	=?,niscreditterm=?, NAGELATOPROPSER	 = ?, NMAXENTRYAGECHILD = ?,NHOLDINGBASIS=?, NMAXAGE=?, NPRMPAYINGTERMAGE=?,
+		NISLEVELTERM =?,NISRIDERTYPE =?,NISCASHPAYCOMMAGEAPPL =?,NCASHPAYCOMMAGE =?
+		WHERE strprodcd = ? and nprodver = ?</query>
+   </sql>
+    <!-- End:12-07-2023||Rohit#23||TRM_MBF_ECNURF_1519_350_P1||Added NISCASHPAYCOMMAGEAPPL,NCASHPAYCOMMAGE -->
+   <!-- End|Sweta|30/12/2020 |Mar Takaful Ph2 |URF27161 -->
+ <!--End 20|03|2019 |TRM_MBFURF_CLTA_CLTT_23816_265  -->
+<!-- End:27/11/2014:TRM_MBF_CR435_0145_PS:Vishakha:Added Code to get NHOLDINGBASIS -->
+<!--End:14/12/2009:SIT 524:pritirs-->  
+   <!-- end:28/01/2008:MayBanPH1:sonalb -->
+   <!-- Start:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for allow si on sa,paid up rate and repay option-->
+   <!-- Start:07/12/2011 : vigneshA :CR256A: added niscsvfactorappl -->
+   <!--Start: CR-91|28/05/2012|Tracebility Code:TRM_MBF_91_00012|ravis|nacfFreq filed added -->
+   <!-- Start::18/12/2013/:CR364:Added Unutilized basic CSV for PV option in product applicability -->
+   <sql Id="Update_PRD_INFO_3">
+	<query>UPDATE prd_info_3 SET niscvapplonbon = ? , ncvstartyear = ?,nbonstartyear = ?,
+		npdupstartyear = ?,niscvappl = ?,nispdupappl = ?,nisaplappl = ?,nisetaappl = ?,netastartyear = ?,
+		nisautononforf = ?,nautononforfopt = ?,nsvstartyear = ? , strupdatedby = ? , dtupdated = nvl(?, sysdate),
+		nisassetshareappl=?,dtassetshareappl= ?,nissisaprem= ?,npaidupparate= ?,nrepayoption= ?,niscsvfactorappl = ?,nacffreq=?	,nisucsvappl 
+		=?,nucvstartyear =?
+		WHERE strprodcd = ? and nprodver = ?</query>
+   </sql>
+   <!-- End::18/12/2013/:CR364:Added Unutilized basic CSV for PV option in product applicability -->
+   <!--End: CR-91|28/05/2012|ravis|Tracebility Code:TRM_MBF_91_00012|nacfFreq filed added -->
+   <!-- End:07/12/2011 : vigneshA :CR256A: added niscsvfactorappl -->
+   <!-- End:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for allow si on sa,paid up rate and repay option-->
+	<!--Start : RajeshP : CR_380 : Code chanegs done to capture the Product Premium Group for sub standard cases  -->
+   <!--Start:Pranalee:10/10/13 : defect8323|CR365B|added for type of SA and SA in multiples of fields  -->
+   <!--start:22-mar-2013:govinds|DM Defect 178|Made necessary changes to fetch the FD product flag from prd_info_4-->
+<!-- Start:21/06/2014|CR#393|Yash|Policy Level Limit Handling|dmeddedlimit,dmedlifelimit added -->
+   <!-- Start:18-MAR-2015:CR458-TRM_MBF_CR458_160:SunilN:added strprodlagrp -->
+   <!-- Start:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group 2 -->
+   <!--Start:07-Feb-2013:RaviB|CR 476|Introduce new feature with Advance Payment Applicable flag in prd_info_4 -->
+<!-- Start: :Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1 |Added field DMINPAYOUTAMT, DPAYOUTMULTIPLEOF -->
+   <!-- Start:15-09-2017:TRM_MBF_URF19496_225:Added NMULMEDDEDLMT, NMAXEAGEMULDEDOPT, STRPRODUNITGRP -->
+   <!-- START:30/03/2020:TRM_MBF_URF27161_295_P1:MAR ElitePlus Takafulink:Phase 1 -->
+   <sql Id="Update_PRD_INFO_4">
+	<query>UPDATE prd_info_4 SET nprmtype = ?, dbassaratiorider = ?,dbassaratiosrider = ?,nisvarsaappl = ?,
+		nprmpmttype = ?,nissprminstt = ?,nisprmaccr = ? , strupdatedby = ? , dtupdated = nvl(?, sysdate),dPrmMultipleOf = ?,
+		strprodsagrp = ?,strprodspgrp = ?,nvarprmbasis = ?,nrefundunearnedprm = ?,nfdmigrationapplc = ?,ncontributionBased=?,dmedannllimit=?,
+		nfdproduct = ?,strprodspgrpsubstd =? ,NTYPEOFSA =?,DSAMULTIPLEOF=?,Dmeddedlimit=?,dmedlifelimit=?,strprodlagrp = ?,strprodsagrp2 = ?,nisadvanprm =?,nadvprmminterm=?,DMINPAYOUTAMT=?,DPAYOUTMULTIPLEOF=?
+		,NMULMEDDEDLMT = ?,NMAXEAGEMULDEDOPT = ?,STRPRODUNITGRP = ?,strprodsagrp3 = ?
+		WHERE strprodcd = ? and nprodver = ?
+	</query>
+   </sql>
+   <!-- END:30/03/2020:TRM_MBF_URF27161_295_P1:MAR ElitePlus Takafulink:Phase 1 -->
+   <!-- End:15-09-2017:TRM_MBF_URF19496_225:Added NMULMEDDEDLMT, NMAXEAGEMULDEDOPT, STRPRODUNITGRP -->
+<!-- End :Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1 -->
+   <!--End:07-Feb-2013:RaviB|CR 476|Introduce new feature with Advance Payment Applicable flag in prd_info_4 -->
+   <!-- End:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group 2 -->
+   <!-- End:18-MAR-2015:CR458-TRM_MBF_CR458_160:SunilN:added strprodlagrp -->
+ <!-- End:21/06/2014|CR#393|Yash|Policy Level Limit Handling|dmeddedlimit,dmedlifelimit added -->
+   <!--end:22-mar-2013:govinds|DM Defect 178|Made necessary changes to fetch the FD product flag from prd_info_4-->
+    <!--End:Pranalee:10/10/13 : defect8323|CR365B|added for type of SA and SA in multiples of fields  -->
+	<!--End: RajeshP : CR_380 : Code chanegs done to capture the Product Premium Group for sub standard cases  -->
+   <sql Id="Update_PRD_INFO_5">
+	<query>UPDATE prd_info_5 SET nmaxnbrofrevival = ?,nmaxyearsredate = ?,nmaxperdrevival = ?,nrevivalperdunit = ?,
+		strupdatedby = ? , dtupdated = nvl(?, sysdate)
+		WHERE strprodcd = ? and nprodver = ? 
+	</query>
+   </sql>
+   <!--Start:12/10/2007:MaybanPH1:anilg:<TaskID>:Added STRRIDERGROUPID
+                                                 for updating group value  for Id="ProductCombinationUpdate"-->
+   <!-- Start:02-Jan-2018:TRM_MBF_URF20283_230:Added NISALLOWFORGIO -->
+   <sql Id="ProductCombinationUpdate">
+	<query>UPDATE prd_cmb SET nexclmandatoryflg = ? ,
+						  nonwhom = ? , 
+						  nlifeseq = ? , 
+						  strupdatedby = ? , 
+						  dtupdated = nvl(?, sysdate) ,
+						  STRRIDERGROUPID = ?
+						  ,NISALLOWFORGIO = ?
+		WHERE strprodcd = ? and nprodver = ? and strriderprodcd = ?
+		and nriderprodver = ?
+	</query>
+   </sql>
+   <!-- End:02-Jan-2018:TRM_MBF_URF20283_230:Added NISALLOWFORGIO -->
+   <!--Start:18/12/2007:MaybanPH1:anilg:<TaskID>:Added for updating group value  in prd_cmb-->
+   <sql Id="updateGroupForProduct">
+	<query>UPDATE prd_cmb SET  STRRIDERGROUPID = ?,dtupdated=sysdate
+		   WHERE strprodcd = ? 
+		   and nprodver = ? 
+		   and STRRIDERGROUPID = ?
+	</query>
+   </sql>   
+   <sql Id="UpdateConversion">
+	<query>UPDATE prd_conv_dtl SET ncnvuptopolyears = ? , ncnvmaxattage = ? , strcnvprodcd = ? , ncnvprodver = ?, 
+		strupdatedby = ? , dtupdated = nvl(?, sysdate),NCNVYRSBEFOREEXP = ?
+		WHERE lcnvdtlseq = ? 
+	</query>
+   </sql>
+   <!--Start:18/09/2007:MaybanPH1:anshult:<TaskID>:PRD_TermUptoMaturity-->
+   <sql Id="UpdateTerm">
+	<query>UPDATE prd_mat_ageterm SET nmaturitytype=?, ngendercd = ? , ntermvalue = ?, strupdatedby = ? , dtupdated = nvl(?, sysdate) 
+			,nclienttype=? WHERE  ltrmdtlseq = ? 
+	</query>
+   </sql>
+   <!--End :18/09/2007:MaybanPH1:anshult-->
+   <sql Id="UpdateRenewable">
+	<query>UPDATE  prd_info_5 SET  nisguaranrenewappl = ?,nisuwreqd = ?,nisrenewonce = ?,
+		nisatrenewappl = ?,nrenewwithinperd = ?,nrenewperdunit = ?,nmaxtermappl = ?,
+                nrenewmaxattage = ?,nmaxexpiryage = ?,strupdatedby = ?,dtupdated = nvl(?, sysdate)
+		WHERE   strprodcd = ? AND  nprodver = ?
+	</query>
+   </sql>
+   <!-- start:govinds:TRM_MBF_ECNURF_316_324_PH2 -->
+     <sql Id="UpdateRevival">
+	<query>UPDATE prd_info_5 SET nmaxnbrofrevival = ? , nmaxperdrevival = ? , nrevivalperdunit = ? , 
+		nmaxperdredate = ? , nredateperdunit = ? , strupdatedby = ? , dtupdated = nvl(?, sysdate),
+		NMAXNBROFREVIVALREDATE	= ?, NREPARTWINDOWDAYS = ?
+		WHERE strprodcd = ? and nprodver = ? 
+	</query>
+   </sql>
+   <!-- end:govinds:TRM_MBF_ECNURF_316_324_PH2 -->
+   <sql Id="Update_PRD_VAL_HDR">
+	<query>UPDATE prd_val_hdr SET ntblformlflg = ? , strtblformlcd = ? , strupdatedby = ?,
+	dtupdated = nvl(?, sysdate),NFORMULAVER = ? WHERE strprodcd = ? and nprodver = ? and nvaluetype = ?</query>
+   </sql>
+      <!-- //start:12/05/2009:TRM_MBF_ILSR_00001:sonalb:CR11: client type -->
+   <sql Id="UpdateAgeBasedTerm">
+	<query>
+        UPDATE prd_minmax_eage
+        SET strprodcd = ?, nprodver = ? ,ntermfrom = ?,
+        ntermto = ?,nminentryagemale = ?,nmaxentryagemale = ?,
+        nminentryagefemale =?,nmaxentryagefemale = ?,
+		nlifeseq=?, strupdatedby = ?,dtupdated = nvl(?, sysdate), NCLIENTTYPE=?
+        WHERE lminmaxentryageseq = ? 
+      </query>
+   </sql>
+      <!-- //start:12/05/2009:TRM_MBF_ILSR_00001:sonalb:CR11: client type -->
+   <sql Id="UpdateIndexAge">
+	<query>
+        UPDATE prd_index_age
+        SET strprodcd = ?, nprodver = ? ,nagedifffrom = ?,
+        nagediffto = ?,nvalueaddtolowage = ?,strupdatedby = ?,dtupdated = nvl(?, sysdate)
+        WHERE lindexageseq = ? 
+	</query>
+   </sql>
+   <sql Id="PremiumTableTypeHdrUpdate">
+	<query>UPDATE  prd_prmtbltyp_hdr
+		SET     nbasis = ?,
+			iunit = ?,
+			npmtmode = ?,
+			strupdatedby = ?,
+			dtupdated = nvl(?, sysdate)
+		WHERE   lprmtbltyphdrseq = ?
+
+       	</query>
+   </sql>
+   <!--Start Modified By Ramarao on 12/17/2007 -->
+   <!--Start:26-04-2022 : Pranav :  TRM_MBF_ECNURF_162_P2 : Adding DPERC in Variable Premium Screen -->
+     <sql Id="UpdateVarSAPrmHdr">
+	<query>
+        UPDATE PRD_VSA_PRM_HDR
+        SET STRPRODCD = ?,NPRODVER = ?,NSAPRMTYPE = ?,
+        NTBLFORMLFLG = ?,STRTBLFORMLCD = ?,NVARONBASECUR = ?,
+        NVARIND = ?,DMAXVARSA = ?,DMINVARSA = ?,
+        STRUPDATEDBY = ?,DTUPDATED = nvl(?, sysdate),NVARPRMFREQ = ?,DPERC = ?
+        WHERE LVSAPRMHDRSEQ = ?
+     </query>
+   </sql>
+   <!--End:26-04-2022 : Pranav :  TRM_MBF_ECNURF_162_P2 : Adding DPERC in Variable Premium Screen -->
+   <sql Id="UpdateVarSAPrmDtl">
+	<query>
+        UPDATE PRD_VSA_PRM_DTL
+        SET NTERMFROM = ?,NTERMTO = ?,
+        NENTRYAGEFROM = ?,NENTRYAGETO = ?,
+        NPOLYEARFROM = ?,NPOLYEARTO = ?,
+        DVARRATE = ?,STRUPDATEDBY = ?,DTUPDATED = nvl(?, sysdate)
+		WHERE LVSAPRMDTLSEQ = ?
+     </query>
+   </sql>
+    <!--Start Modified By Pranav on 01/03/2022: added nprmpmtyears,npolterm from and to: FSD_MaxiPro_Campaign_v1.1 -->
+   <sql Id="UpdateMinPrmDetail">
+	<query>
+	 UPDATE prd_min_prm SET npmtmode =?,strcurrcd = ?,
+  	 dminprmamnt = ?,nisstaffpolicy=?,strupdatedby = ?,dtupdated = nvl(?, sysdate),ngender = ?,nprmpmtyearsfrom = ?,nprmpmtyearsto = ?,npoltermfrom = ?,npoltermto = ? WHERE lminprmseq = ?
+	</query>
+   </sql>
+   <!--End Modified By Pranav on 01/03/2022: added nprmpmtyears,npolterm from and to: FSD_MaxiPro_Campaign_v1.1 -->
+   <!--End Modified By Ramarao on 12/17/2007 -->
+   <sql Id="UpdateLtdPremium">
+    <query>
+        UPDATE prd_lmt_pmt_term SET strprodcd=?, nprodver=?, ntermfrom=?, ntermto=?, nprmterm=?, nprmpmtyears=?, strupdatedby=?, dtupdated=nvl(?, sysdate) WHERE llmtpmtseq= ?
+    </query>
+  </sql>
+ <sql Id="UpdateHealthExtra">
+    <query>
+        UPDATE prd_health_extra 
+        SET nmortratefrom = ?,nmortrateto = ?,
+        dpercxtra = ?, strupdatedby = ?, dtupdated = nvl(?, sysdate)
+        WHERE lhealthxtraseq = ?
+    </query>
+  </sql>
+  <!--TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-S-->
+  <sql Id="UpdateModalFactor">
+      <query>
+          UPDATE prd_modal_factor
+          SET npmtmode = ?,npmtsourcecd = ?,dmodalfactor = ?,
+          dflatcharge = ?,strupdatedby = ?,
+          dtupdated = nvl(?, sysdate),IBASISUNIT=?,NFLEXAPPL=NVL(?,0)
+          WHERE lmodalfactorseq = ?    
+      </query>
+  </sql>
+   <!--TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-E-->
+  <sql Id="UpdateSAEAge">
+	<query>
+        UPDATE prd_minmax_sa
+        SET strprodcd = ?, nprodver = ? , neagefrommale = ?,
+        neagetomale = ?, neagefromfemale = ?, neagetofemale = ?,
+	dmaxsa = ?, dminsa = ? ,strupdatedby = ?,
+	dtupdated = Sysdate
+        WHERE lminmaxsaeageseq = ? 
+	</query>
+   </sql>
+   <sql Id="UpdateCommHdr">
+	<query>UPDATE prd_comm_hdr SET  ncommtype = ?,ncommbase = ?,
+		icommbaseunit = ?,strupdatedby = ?,dtupdated = nvl(?, sysdate)
+		WHERE  lcommhdrseq = ?
+	</query>
+   </sql>
+   <sql Id="UpdateCommDtl">
+	<query>UPDATE prd_comm_dtl SET nentryagefrom = ?,nentryageto = ?,
+		ntermfrom = ?,ntermto = ?,nnbroflivesfrom = ?,nnbroflivesto = ?,
+		npolyearto = ?,npolyearfrom = ?,dbasevaluefrom = ?,
+		dbasevalueto = ?,dcommrate = ?,strupdatedby = ?,dtupdated = nvl(?, sysdate)
+		WHERE  lcommdtlseq = ?
+	</query>
+   </sql>
+   <sql Id="UpdateReducedPremium">
+     <query>
+       UPDATE prd_reduced_prm SET
+       ntermfrom = ?,ntermto = ?,nagepolyearind = ?,nagepolyear = ?,
+       nflatrateind = ?,drate = ?,iunit = ?,strupdatedby = ?,dtupdated = nvl(?, sysdate)
+       WHERE lreducedprmseq = ?
+     </query>
+   </sql>
+   <sql Id="UpdateValTblHdr">
+     <query>
+       UPDATE prd_val_tbl_hdr
+       SET nvaluetype = ?,nvaluebasis = ?,
+       ivalueunit = ?,strupdatedby = ?,dtupdated = nvl(?, sysdate),NPOLYEARSINFORCE=?
+       WHERE strtblcd = ?     
+     </query>
+   </sql>
+   <!-- Start:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for medical non medical indicator option-->
+   <!-- //start:08/01/2010:Sonalb:000|SIT|Reviewed By Sonal|added premium columns as part of Bijak Msia development -->
+   <!-- start 13/12/2011       3575|Day1+1|reviewed by kamlesh|add value basis and unit fields -->
+   <!-- Start:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+   <!-- Start 20-07-2016 | TRM_MBF_URF134246_206 |added Is Smoker column -->
+   <!-- Start:11-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added  NRATESCALEOPTION -->
+   <sql Id="UpdateValTblDtl">
+     <query>
+       UPDATE prd_val_tbl_dtl
+       SET ntermfrom = ?,ntermto = ?,nentryagefrom = ?,nentryageto = ?,
+       npolyearfrom = ?,npolyearto = ?,dvaluerate = ?,ngendercd = ?,
+       dtefffrom = ?,dteffto = ?,
+       NMATUPTOAGEFROM=?,
+			NMATUPTOAGETO=?,	
+			NMATUPTOTERMFROM=?,	
+			NMATUPTOTERMTO=?,	
+			NPRMPAYUPTOAGEFROM=?,	
+			NPRMPAYUPTOAGETO=?,	
+			NPRMPAYUPTOTERMFROM=?,
+			NPRMPAYUPTOTERMTO=?,
+       strupdatedby = ?,dtupdated  = nvl(?, sysdate),NMEDNONMEDIND= ? , nprmfrom = ?, nprmto = ?, nvaluebasis = ?, ivalueunit = ?,
+       DSAFROM = ?, DSATO = ?
+       ,NISSMOKER = ?
+       ,NRATESCALEOPTION = ?
+       WHERE lvaltbldtlseq = ?
+     </query>
+   </sql>
+   <!-- End:11-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added  NRATESCALEOPTION -->
+   <!-- End 20-07-2016 | TRM_MBF_URF134246_206 |added Is Smoker column -->
+   <!-- End:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To. -->
+   <!-- End:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for medical non medical indicator option-->
+   <!-- //start:08/01/2010:Sonalb:000|SIT|-->
+   <!-- start:26/11/2007:MaybanPh1:sonalb:PRD_DISCOUNT added new columns -->
+   <sql Id="UpdateDiscountHdr">
+     <query>
+        UPDATE prd_discount_hdr SET  ndisctype = ?,nprio = ?,ndiscappliedon = ?,
+     nbasis = ?,strupdatedby = ?,dtupdated = nvl(?, sysdate),STRDISCDESC = ?
+       WHERE  ldiscmapseq = ?
+     </query>
+   </sql>
+   <!-- Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to -->
+   <sql Id="UpdateDiscountDtl">
+     <query>
+      UPDATE prd_discount_dtl SET  ntermfrom = ?,ntermto = ?,drate = ?,strupdatedby = ?,
+      dtupdated = nvl(?, sysdate),NPOLYRINFORCEFM= ?, NPOLYRINFORCETO= ?, DBASISFRM = ?, DBASISTO= ?, 
+      NDISCBASIS= ?, NUNIT= ?, NAGEFRM = ?,NAGETO= ?, NGENDER= ?, DTBASISFRM= ?, DTBASISTO= ?,NPRMPAYTERMFROM=?,NPRMPAYTERMTO=?
+       WHERE  ldiscdtlseq = ?
+     </query>
+   </sql>
+   <!-- End|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to -->
+    <!-- start:26/11/2007:MaybanPh1:sonalb -->
+    <!-- Start:08/May/2008:MaybanPH1:Mandar Joshi:TRM_MBF_CLMIL_00003:Added code to capture NAV date option -->
+    <!-- Start:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for recover periodic payment option-->
+    <!-- //start:02/06/2010:sonalb:1656|UAT|Reviewed by Sonal|added pmt factpr n mode for periodic pmt -->
+   <!-- //Start: 5/7/2012 | Defect 6295 |dev1: Added nisgcponpdup-->    
+	<!-- Start : RajeshP : CR_355 : Code changes done to include new Dropdown for GCP payble option -->   
+  <!-- Start:24Feb2015:Prod10772|To identity how many times Funeral expense to be paid. -->
+   <sql Id="UpdateProductEvent">
+     <query>
+       UPDATE prd_event_map
+       SET    ndoespoltermn = ?,ndoesprodtermn = ?,ndoesprmcease = ?,
+       dtupdated = nvl(?, sysdate),strupdatedby = ?,njointlifeapplicability = ?,nnavdtoption= ?,nRecoverPrdPmt=?,
+       DFACTOR=?, NFREQUENCY=?,nisgcponpdup=?, NGCPPAYOPTFRM=?,NISFUPERLIFE=?
+       WHERE  leventmapseq = ?
+     </query>
+   </sql>
+  <!-- End:24Feb2015:Prod10772|To identity how many times Funeral expense to be paid. -->   
+<!-- End : RajeshP : CR_355 : Code changes done to include new Dropdown for GCP payble option -->
+ <!-- //End: 5/7/2012 | Defect 6295 |dev1: Added nisgcponpdup-->  
+   <!-- //End:02/06/2010:sonalb:1656|UAT|Reviewed by Sonal|added pmt factpr n mode for periodic pmt -->
+   <!-- End:29/May/2008:anupd:TRM_TKF_PRD_00011:modified query for recover periodic payment option-->
+   <!-- End:08/May/2008:MaybanPH1:Mandar Joshi:TRM_MBF_CLMIL_00003:Added code to capture NAV date option -->
+<!-- //Start:28/04/2009:chandrashekharb:TRM_MBF_CLMCR_00041:Done changes for CR-69, Policy cancellation due to non disclosure -->
+<!-- 15/Oct/2009:Mandar Joshi:TRM_MBF_ANN_00014:Added column for Annuity Phase -->   
+<!-- //start:17/JUN/2010:Sonalb:1632|UAT|Reviewed By Heena|moved Applicable ON field  from ben defn to event map -->
+<!-- Start:14-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added GAINDICATOR -->
+<!--Start:18-4-2022 | Pranav | Added for Waiting Period and Waiting Unit-->
+   <sql Id="UpdateEventBenefitDetail">
+     <query>
+       UPDATE prd_event_ben_map
+       SET nbentype = Nvl(?, nbentype),nbenbasis = Nvl(?, nbenbasis),
+       ibenunits = ?,dbenrate = ?,strschednbr = ?,nmaxinstt = ?,
+       nbenpmtfreq = ?,nbenapplupto = ?,nbenuptoyears = ?,nisintappl = ?,
+       ninttype = ?,dintrate = ?,nissubs = ?,nafflnbenschedappl = ?,
+       strafflnschednbr = ?,
+       dtupdated = nvl(?, sysdate),strupdatedby = ?,
+      STRPRMTBLTYP = ?,NISCUSTOM = ? ,dflatamnt = ?,nGrndOfEvent = ?,nAnnPhase=?, NAPPLICABLEON	=?
+      ,GAINDICATOR = ?,NWAITINGPRDUNIT = ?,NWAITINGPRDVALUE = ?
+       WHERE  leventbenseq = ?
+     </query>
+   </sql>
+<!--End:18-4-2022 | Pranav | Added for Waiting Period and Waiting Unit-->
+<!-- End:14-May-2018:TRM_MBF_URF20283_230:MILP Agency-Phase2:Added GAINDICATOR -->
+<!-- //End:28/04/2009:chandrashekharb:TRM_MBF_CLMCR_00041:Done changes for CR-69, Policy cancellation due to non disclosure -->
+<!-- //End:17/JUN/2010:Sonalb:1632|UAT|Reviewed By Heena|moved Applicable ON field  from ben defn to event map -->   
+   <sql Id="UpdateBenTpdb">
+     <query>
+       UPDATE prd_ben_tpdb SET  ntermfrom = ?,ntermto = ?,neventagefrom = ?,
+       neventageto = ?,dbasevaluefrom = ?,dbasevalueto = ?,dbenrate = ?,
+       dtupdated = nvl(?, sysdate),strupdatedby = ?
+       WHERE  lbentpdbseq = ?
+     </query>
+   </sql>
+  <!--Start|20/10/2013|8342 |Adding gender column in benifit definition screen -->
+ <!-- Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and rate scale value --> 
+  <sql Id="UpdateBenAgeYearTerm">
+     <query>
+       UPDATE prd_ben_ageyrterm SET ntermfrom = ?,ntermto = ?,neventagefrom = ?,
+       neventageto = ?,npolyearfrom = ?,npolyearto = ?,dbenrate = ?,dtupdated = nvl(?, sysdate),
+       strupdatedby = ?,ngendercd=?,NPRMPAYTERMFROM=?,NPRMPAYTERMTO=?,NRATESCALEOPTION=?,NEXPIRYAGE=?
+       WHERE  lageyrtermseq = ?
+     </query>
+   </sql>
+<!-- End|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to -->
+<!--End|20/10/2013|8342 |Adding gender column in benifit definition screen -->
+
+   <!-- start :25-01-2008 :Mayban Ph1:garima removed fields dtefffrom = ?,dteffto = ?, -->
+    <sql Id="UpdateAfflnBenSchedHdr">
+     <query>
+         UPDATE prd_affln_ben_hdr
+         SET nbenbasis = ?,
+         nismutexclv = ?,dtupdated = nvl(?, sysdate),strupdatedby = ?,
+         dmaxpayperc = ?
+         WHERE strafflnschednbr = ?
+     </query>
+   </sql>
+      <!-- start :25-01-2008 :Mayban Ph1:garima removed fields dtefffrom = ?,dteffto = ?, -->
+   <!--Start:Myaban Ph1:garima:Added  Fields ,DMAXPERIOD,DMAXPERIODUNIT,DTEFFFROM,DTEFFTO -->
+   
+<!-- Start:23/09/10/2009:TRM_MBF_CR196_00001:pritirs:changes for wop -->
+<!-- Start:13-AUG-2014:CR411_P2:TRM_MBF_CR411_0106:BrijeshP:Added fields for Commencement within duration and Product Term -->
+<!-- Start|20/04/2021|TRM_MBF_URF27389_311_P2|Protect 88 PH2 -->
+<sql Id="UpdateAfflnBenSchedDtl">
+     <query>
+        UPDATE prd_affln_ben_dtl
+        SET strafflnschednbr = ?,nafflntype = ?,
+        nisnonexclv = ?,nflatrateflg = ?,drate = ?,iunit = ?,nafflnfreq = ?,
+        nmaxinstt = ?, NCLMPOLTERMN = ?, NCLMPRODTERMN = ?, NCLMPRMCEASES = ?,strschednbr = ?,
+        dtupdated = nvl(?, sysdate),strupdatedby = ?,
+        DMAXBEN = ?, NMAXELIGIBLEAGE = ?, 
+        NSURVPERIOD = ?, NCLAIMALLOWED = ?, STRGRPCD = ?,STRAFFLNGROUP = ?,NINDMNTYPE = ?,
+        NSTDPLAN = ?,DFLATAMNT	= ?,NBENBASIS = ?,NBENTIMES	= ?,NREDOTHERBEN = ?,NANNLIMIT = ?,
+        NPOLLIFELIMIT = ?,NANNDEDLIMIT = ?,NDEDLIMITPERDIS	= ?,NWAITINGPRD	= ?,DCORIPERC = ?,DCOPAYPERC = ?,
+         DMAXPERIOD= ? ,DMAXPERIODUNIT = ?,DTEFFFROM=  ? ,DTEFFTO = ?,NISWOPAPPL=? ,DCOMMDURATION=?,DCOMMDURATIONUNIT=?, NPRODTERMN=?,NDURATIONFROM,NDURATIONTO							
+        WHERE lafflnbendtlseq = ?
+     </query>
+   </sql>
+ <!-- End|20/04/2021|TRM_MBF_URF27389_311_P2|Protect 88 PH2 -->
+<!-- End:13-AUG-2014:CR411_P2:TRM_MBF_CR411_0106:BrijeshP:Added fields for Commencement within duration and Product Term -->
+<!-- End:23/09/10/2009:TRM_MBF_CR196_00001:pritirs -->
+   <!--End:Myaban Ph1:garima:Added  Fields ,DMAXPERIOD,DMAXPERIODUNIT,DTEFFFROM,DTEFFTO -->
+  <!-- Start :RajeshP : 10-Apr-2012 : CR_306 : Changes for Periodic payments -->
+   <!--  <sql Id="UpdateSchedDtl">
+     <query>
+      UPDATE prd_sched_dtl
+      SET strschednbr = ?,npmtdoneafterdt = ?,ninsttnbr = ?,ntermfrom = ?,
+      ntermto = ?,nperd = ?,nperdunit = ?,drate = ?,
+      dtupdated = nvl(?, sysdate),strupdatedby = ?
+      WHERE lscheddtlseq = ?
+     </query>
+   </sql>-->
+
+   <sql Id="UpdateSchedDtl">
+     <query>
+      UPDATE prd_sched_dtl
+      SET strschednbr = ?,npmtdoneafterdt = ?,ninsttnbr = ?,ntermfrom = ?,
+      ntermto = ?,nperd = ?,nperdunit = ?,drate = ?,
+      dtupdated = nvl(?, sysdate),strupdatedby = ?,npmtmode = ?,ndays =?
+      WHERE lscheddtlseq = ?
+     </query>
+   </sql>
+   <!-- End :RajeshP : 10-Apr-2012 : CR_306 : Changes for Periodic payments -->
+    <!--09-07-2018 | Pawan Annuity Start here --> 
+    <!--Start:04-07-2023||Rohit#22||TRM_MBF_URF24268_FIN_LTB_PROV_349||Added NISLTB -->
+   <sql Id="UpdateSchedHdr">
+     <query>
+      UPDATE prd_sched_hdr
+      SET dtupdated = nvl(?, sysdate),strupdatedby = ?,NSCHTYPE = ? , NSCHFREQ = ? , NPERD = ? , NPERDUNIT = ? , NISLTB = ?
+      WHERE strschednbr = ?
+     </query>
+   </sql>
+    <!--End:04-07-2023||Rohit#22||TRM_MBF_URF24268_FIN_LTB_PROV_349||Added NISLTB -->
+    <!--09-07-2018 | Pawan Annuity End here --> 
+     <!-- start:26/03/2009:sonalb:TRM_MBF_ILSW_00001 : renamed columns -->
+     <!--START:18-05-2009:TRM_MBF_ILSR_00024:avinashss:Query modified to get Percentage   -->
+     <!--  // start:23/JUN/2010:sonalb:1959|UAT|Reviewed By Heena|Added GMMV Ratio  -->
+     <!-- Start:CR-340|Tracebility Code :TRM_MBF_340_0047|ravis|6-2-2013|added for cash Payout -->  
+ 	 <!--Start:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added NISNLGAPPL,NYEARSOFNLG Elite Investment product-->  
+ 	 <!--Start 22/06/2015 : Pawan : URF 12862 :Top Up Feature Enhancement -->  
+   <!--Start:30-Aug-2018:SantoshK : TRM_URF_21454_56_57_241_P2:Jumbo P2:Added NREDUCINGSAMONTH :Reducing SA Month in withdrawal part.-->
+   <!-- TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-S -->
+   <sql Id="UpdateInvestmentLink">
+     <query>
+        UPDATE prd_invest_link_m 
+	SET nallowpartwithd = ?,nallowswitch = ?,nallowtopup = ?,nallowchangesaprm = ?,
+	nissaimpactwithd = ?,dminwithdamntallow = ?,dminbalafterwithd = ?,
+	nissaimpacttopup = ?,dmintopupamnt = ?,nnbroffreeswitch = ?,
+	nswitchyearlife = ?,nswitchyearunit = ?,dminfundsizeswitch = ?,dminswitchamnt = ?,
+	ntypeofchange = ?,nisoptional = ?,naffectssaprm = ?,dtupdated = nvl(?, sysdate),strupdatedby = ?,DWITHDRATE	=?,NWITHDBASIS=?,NWITHDCRITERIA	=?,
+	dtopuprate = ?,ntopupbasis = ?,
+	ntopupcriteria = ?,ninternalfundrider = ?,
+	strcoitblcd = ?, strinvesthdrtblcd =?,nAllocAfterDays=?, nprmmultiple = ?, dmaxpremium = ?,
+	NMINSWITCHBALTYPE = ?,NCOICALCTYPE = ?,STRCOIFORMULACD = ?,NGMMV = ?,
+	NGMSV = ?,NLOYALTYBONUSAPPLC = ?,NMINSWITCHAMTTYPE	= ?	,DGMMVPERC = ?, DRATIOGMMV=? , NDISTRIBUTEMTHD = ?, NSHROTFALLOPT =?,
+	NISNLGAPPL=?,NYEARSOFNLG=?,NISNOTIONAL=?,NTYPETOPUP=? ,NTOPUPPRMMULTOF=?,NREDUCINGSAMONTH= ?,NAUTOTOPUPAPPLC=?
+        WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <!-- TRM_MBF_ECNURF_940_340-01-12-2022 #Deepashri-E -->
+   <!--End:30-Aug-2018:SantoshK : TRM_URF_21454_56_57_241_P2:Jumbo P2:Added NREDUCINGSAMONTH :Reducing SA Month in withdrawal part.-->
+   <!--eND 22/06/2015 : Pawan : URF 12862 :Top Up Feature Enhancement -->  
+  	 <!--End:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added NISNLGAPPL,NYEARSOFNLG Elite Investment product-->
+   <!-- End:CR-340|Tracebility Code :TRM_MBF_340_0047|ravis|6-2-2013|added for cash Payout -->  
+   	<!--END:18-05-2009:TRM_MBF_ILSR_00024:avinashss-->
+     <!-- end:26/03/2009:sonalb:TRM_MBF_ILSW_00001 : renamed columns -->
+     <!-- Start: 23-May-2017 : Swati : TRM_MBF_URF137915_220 :  Mega ILP Phase 1 Sprint 1 -->
+   <sql Id="UpdateAllocaRate">
+     <query>
+         UPDATE prd_alloc_rates 
+         SET nprmtermfrom = ?,nprmtermto = ?,ntermfrom = ?,ntermto = ?,NPOLYRFROM = ?,npolyrto = ?,nisstaff = ?,
+         dallocrate = ?,strgrpschemecd = ?,dtupdated = nvl(?, sysdate),strupdatedby = ?
+         WHERE lallocrateseq = ? 
+     </query>
+   </sql>
+   <!-- End: 23-May-2017 : Swati : TRM_MBF_URF137915_220 :  Mega ILP Phase 1 Sprint 1 -->
+   <sql Id="UpdateFundMap">
+     <query>
+        UPDATE prd_prod_fund_map
+        SET strfundcd = ?,dminallocperc = ?,dminincrementperc = ?,dtupdated = nvl(?, sysdate),strupdatedby = ?
+        WHERE lprodfundmapseq= ?
+     </query>
+   </sql>
+      <!-- Start:31/10/2007:MaybanPH1:anshult:<TaskID>:PRD_AllocationRules -->
+      <!-- Start:20/12/2007:MaybanPH1:anilg:<TaskID>:added  NPRMPMTTYPE for Id="UpdateRulesAllocation"-->
+      <!-- Start:29/12/2007:MaybanPH1:anilg:<TaskID>:added  NADVPRMAPPLD for Id="UpdateRulesAllocation"-->
+       <!-- START:16-5-2009:TRM_MBF_ILSR_00005:avinashss:Query Modified as per new table structure -->
+ <!-- Start:14-Aug-2019:TRM_MBF_URF_25231_283|Sustainability Changes:added NISSUSTPRMAPPLC column -->	      
+   <sql Id="UpdateRulesAllocation">
+     <query>
+        UPDATE prd_invest_alloc
+        SET NRISKCHGFREQ= ?,
+        dtupdated = nvl(?, sysdate),
+        strupdatedby = ?,
+        NPRMPMTTYPE = ?,
+        NADVPRMAPPLD = ?,
+        NCHGDEDNMETHD = ?,
+        NPRMHOLIDAYAPPLD= ?,
+        NXPRMMETHOD=?,
+        NBIDOFFERCHGAPPLC=?,
+        NADMNCHGAPPLC=?,
+        NADMINCHGFREQ=?,
+        NADMINCHGDEDMTHD=?,
+        NINITCHGAPPL=?,
+        NINITCHGFREQ=?,
+        NINITCHGDEDMTHD=?
+        WHERE LPRODALLOCATIONRULESSEQ= ?
+     </query>
+   </sql>
+  <!-- End:14-Aug-2019:TRM_MBF_URF_25231_283|Sustainability Changes:added NISSUSTPRMAPPLC column -->	
+   <!--END:16-5-2009:TRM_MBF_ILSR_00005:avinashss -->
+    <!--End :18/09/2007:MaybanPH1:anshult -->
+    
+     <!-- START:16-5-2009:TRM_MBF_ILSR_00005:avinashss:Query Added as per new table structure -->
+    
+    <sql Id="UpdateRulesDtlsAllocation">
+     <query>
+        UPDATE prd_invest_alloc_dtl
+        SET 
+        dtupdated = nvl(?, sysdate),
+        strupdatedby = ?,
+        NCOMPONENT=?,
+        NOPERATOR=?		
+        WHERE LPRDALLOCCOMPSEQ = ?
+     </query>
+   </sql>
+    <!--END:16-5-2009:TRM_MBF_ILSR_00005:avinashss -->
+    
+   <sql Id="UpdateHealthCare">
+     <query>
+       UPDATE prd_healthcare_m
+       SET nindvlfamilyflg = ? ,nchilduptoage = ?,nmaxstudychildage = ?,
+       dtupdated = nvl(?, sysdate),strupdatedby = ?
+       WHERE strprodcd = ? AND nprodver = ?
+     </query>
+   </sql>
+   <sql Id="UpdateSinglePremium">
+     <query>
+        UPDATE prd_term_sp_instt
+        SET ntermfrom = ?,ntermto = ?, 
+        nmaxinstt = ?, imaxperdalow = ?, nmaxperdunit = ?,
+        dmodalfactor=?,
+        dtupdated = nvl(?, sysdate), strupdatedby = ?
+	WHERE ltermspinsttseq = ?
+     </query>
+   </sql>
+   <!--Start Modified By Deena Paul Ambooken on 31/12/2007 -->
+   <!-- Start:27/11/2009:Internal:pritirs:Captured formula version -->
+   	<!--Start:CR-365B|Tracebility No.:TRM_MBF_CR365B_0070|ravis|25-07-2013|added for CR-365B LNPRMTBLTYPHDRSEQ -->
+   	<!--Start : RajeshP : CR_395 : Code Changes done to include new Notional Extra Premium Dropdown.  -->
+	<!-- Start |11-09-2015 |TRM_MBF_URF129419_174 | added new feilds DTEFFFROM,DTEFFTO,NNBEFFECTON,NRENEFFECTON -->
+<!--Start:17/6/2017:Lokesh R.|TRM_MBF_URF137915_220|Mega ILP Phase 1 Sprint 1|Added new feilds ntblNformlflg, strNformlcd, NNFORMULAVER For notoinal premium setup-->
+	<!-- Start TRM_MBF_URF19496_225 -->
+	<!-- Start TRM_MBFURF_CLTA_CLTT_23816_265_Enhenecment -->
+   <sql Id="UpdateProductPrmMap">
+     <query>
+         UPDATE prd_prmtbltyp_defn
+         SET ntblformlflg = ?,strformlcd = ?,lprmtbltyphdrseq = ?,
+         nfemalesetbackage = ?,nmalesetbackage = ?,stroetype = ?,
+	 dtupdated = nvl(?, sysdate),strupdatedby = ?,npremroundbasis = ?,strextraprmtblcd = ?,NJNTLFEFCTTBLCD = ?,NFORMULAVER=?,nRSATblFormlFlg=?,
+	 STRRSATBLCD = ?,LNPRMTBLTYPHDRSEQ=? , STRNEXTRAPRMTBLCD=? , DTEFFFROM=?,DTEFFTO=?,nntblformlflg = ?,strNformlcd = ?,NNFORMULAVER=?
+	 ,STRCOITBLCD = ? ,NAUTOOCCEXTRA = ?
+         WHERE lprmtbltypdefnseq = ?
+     </query>
+   </sql>
+   <!-- End TRM_MBFURF_CLTA_CLTT_23816_265_Enhenecment -->
+   <!-- End TRM_MBF_URF19496_225 -->
+	<!-- End |11-09-2015 |TRM_MBF_URF129419_174 | added new feilds DTEFFFROM,DTEFFTO,NNBEFFECTON,NRENEFFECTON -->
+   <!--End: RajeshP : CR_395 : Code Changes done to include new Notional Extra Premium Dropdown.  -->
+   	<!--End:CR-365B|Tracebility No.:TRM_MBF_CR365B_0070|ravis|25-07-2013|added for CR-365B LNPRMTBLTYPHDRSEQ -->
+   <!-- End:27/11/2009:Internal:pritirs-->
+   <!--End Modified By Deena Paul Ambooken on 31/12/2007 -->
+   <sql Id="PrdStatusUpdate">
+     <query>
+        UPDATE prd_authorization
+        SET nstatcd = ?, dtupdated = nvl(?, sysdate), strupdatedby = ?
+        WHERE strprodcd = ? AND nprodver = ? AND nfunctionality = ?
+     </query>
+   </sql>
+   <sql Id="ProdWithdrawlUpdate">
+     <query>
+       UPDATE prd_key_info
+       SET  dteffto = ?,
+       nprodstat = ?, dtprodstatchange = ?,dtUpdated = nvl(?, sysdate), strupdatedby = ?
+       WHERE strProdCd = ? AND nProdVer = ?
+     </query>
+   </sql>
+   <sql Id="ProdAuthorizeUpdate">
+     <query>
+       UPDATE prd_key_info
+       SET  dtefffrom = ?,
+       nprodstat = ?, dtprodstatchange = ?,dtUpdated = nvl(?, sysdate), strupdatedby = ?
+       WHERE strProdCd = ? AND nProdVer = ?
+     </query>
+   </sql>
+   <!--Start:12/10/2007:MaybanPH1:anilg:<TaskID>:Added DMINVALUE,DMAXVALUE
+                                                 for updating min ,max value  for Id="InsertRiderRule"-->   
+   <sql Id="UpdateRiderRule">
+     <query>
+       UPDATE prd_rules
+       SET  noperator1 = ?, 
+            dvalue = ?, 
+            noperator2 = ?, 
+            nplanbasis = ?,
+            dtUpdated = nvl(?, sysdate), 
+            strupdatedby = ?,
+            DMINVALUE = ?, 
+            DMAXVALUE = ?
+       WHERE lruleseq =  ? AND nriderbasis = ?
+     </query>
+   </sql>
+   <sql Id="ApplicabilityRiderRuleUpdate">
+     <query>
+       UPDATE prd_info_2
+       SET  lruleseq = ?,strupdatedby = ?, dtupdated = nvl(?, sysdate) 
+       WHERE strProdCd = ? AND nProdVer = ?
+     </query>
+   </sql>
+   <!--Start:12/10/2007:MaybanPH1:anilg:<TaskID>:Added STRRIDERGROUPID
+                                                 for updating group value  for Id="ProductCombinationUpdate"-->   
+   <sql Id="CombinationRiderRuleUpdate">
+     <query>
+       UPDATE prd_cmb
+       SET  lruleseq = ?, strupdatedby = ?, dtupdated = nvl(?, sysdate) 
+       WHERE strProdCd = ? AND nProdVer = ? AND strriderprodcd = ? AND nriderprodver = ?
+     </query>
+   </sql>
+   
+   <!--Start:12/13/2007:MaybanPH1:anilg:<TaskID>:Added RiderGroup for groupseq-->   
+   <sql Id="UpdateGroupSeq">
+     <query>
+       UPDATE PRD_RIDERGRP_SA
+       SET  LRULESEQ = ?,DTUPDATED=SYSDATE
+       WHERE STRPRODCD = ? AND NPRODVER = ? AND STRRIDERGROUPID = ? 
+     </query>
+   </sql> 
+      <!--End:12/13/2007:MaybanPH1:anilg:<TaskID>:Added RiderGroup for groupseq-->     
+   <sql Id="PremiumRatesVerify">
+     <query>
+       UPDATE prd_prmtbltyp_hdr
+       SET  strverifiedby = ?, dtverified = ? ,DTUPDATED=SYSDATE
+       WHERE lprmtbltyphdrseq = ? 
+     </query>
+   </sql>
+   <sql Id="PremiumRatesAuthorize">
+     <query>
+       UPDATE prd_prmtbltyp_hdr
+       SET  strauthby = ?, dtauth = ? ,DTUPDATED=SYSDATE
+       WHERE lprmtbltyphdrseq = ? 
+     </query>
+   </sql>
+   <sql Id="AfflnSchedHdrVerify">
+     <query>
+       UPDATE prd_affln_ben_hdr
+       SET  strverifiedby = ?, dtverified = ? ,DTUPDATED=SYSDATE
+       WHERE strafflnschednbr = ? 
+     </query>
+   </sql>
+   <sql Id="AfflnSchedHdrAuthorize">
+     <query>
+       UPDATE prd_affln_ben_hdr
+       SET  strauthby = ?, dtauth = ?,DTUPDATED=SYSDATE 
+       WHERE strafflnschednbr = ? 
+     </query>
+   </sql>
+   <sql Id="ScheduleHdrVerify">
+     <query>
+       UPDATE prd_sched_hdr
+       SET  strverifiedby = ?, dtverified = ?,DTUPDATED=SYSDATE 
+       WHERE strschednbr = ? 
+     </query>
+   </sql>
+   <sql Id="ScheduleHdrAuthorize">
+     <query>
+       UPDATE prd_sched_hdr
+       SET  strauthby = ?, dtauth = ?,DTUPDATED=SYSDATE
+       WHERE strschednbr = ? 
+     </query>
+   </sql>
+   <sql Id="NonforfeitureVerify">
+     <query>
+       UPDATE prd_val_tbl_hdr
+       SET  strverifiedby = ?, dtverified = ?,DTUPDATED=SYSDATE 
+       WHERE strtblcd = ? 
+     </query>
+   </sql>
+   <sql Id="NonforfeitureAuthorize">
+     <query>
+       UPDATE prd_val_tbl_hdr
+       SET  strauthby = ?, dtauth = ?,DTUPDATED=SYSDATE
+       WHERE strtblcd = ? 
+     </query>
+   </sql>
+   <sql Id="OccupationExtraDtlUpdate">
+     <query>
+       UPDATE prd_occup_xtra_dtl
+        SET nflatrateind = ?,nprmbasis = ?,iprmunit = ?,
+        dprmrate = ?,dtupdated = nvl(?, sysdate) ,strupdatedby = ?
+        WHERE stroetype = ? AND stroccupclasscd = ?
+     </query>
+   </sql>
+   <sql Id="OccupationExtraHdrUpdate">
+     <query>
+       UPDATE prd_occup_xtra_m
+        SET strdesc = ?,dtupdated = nvl(?, sysdate) ,strupdatedby = ?
+        WHERE stroetype = ? 
+     </query>
+   </sql>
+   <sql Id="OccupationExtraHdrVerify">
+     <query>
+       UPDATE prd_occup_xtra_m
+       SET  strverifiedby = ?, dtverified = ? ,DTUPDATED=SYSDATE
+       WHERE stroetype = ? 
+     </query>
+   </sql>
+   <sql Id="OccupationExtraHdrAuthorize">
+     <query>
+       UPDATE prd_occup_xtra_m
+       SET  strauthby = ?, dtauth = ? ,DTUPDATED=SYSDATE
+       WHERE stroetype = ? 
+     </query>
+   </sql>
+   
+   <!-- Start:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To.  -->
+   <sql Id="UpdatePaidUpDtl">
+     <query>
+       UPDATE prd_val_paidup_dtl
+       SET  nmatagefrom = ?, nmatageto = ?, nattagefrom = ?,nattageto = ?, dratefactor = ?,
+       dintrate = ?, dtefffrom = ?,dteffto = ?,dtupdated = nvl(?, sysdate),strupdatedby = ?,
+       NPOLYEARFROM = ?,NPOLYEARTO = ?,NTERMFROM = ?,NTERMTO = ?,nGenderCd=?,
+       DSAFROM = ?, DSATO = ?
+       WHERE lvalpvseq = ? 
+     </query>
+   </sql>
+   <!-- End:08/07/2015:TRM_MBF_URF129188_172:SachinRai:Added two new fields SA From & SA To.  -->
+   
+   <!--Start:23/11/2007:MaybanPH1:rekham:<TaskID>:PRD_BonusConfiguration  -->
+   <!--Start:28/12/2007:MaybanPH1:sonalb:<TaskID>:PRD_BonusConfiguration  -->
+   <!-- start:08/04/2009:TRM_MBF_POLBEN_00002:sonalb:added NBONRATEDECLRNTYPE,DTCOMCFROM, DTCOMCTO-->
+   <sql Id="ProductBonusHdrUpdate">
+     <query>
+       UPDATE prd_bon_hdr
+       SET  
+	   dtefffrom = ?,
+	   dteffto = ?,
+	   cbontype = ?,
+	   strprodcd = ?,
+	   nprodver = ?,
+	   nrisktype = ?,
+	   nbonbas = ?,
+	   nbonunit = ?,
+	   nfiscalyear = ? ,
+	   dtupdated = nvl(?, sysdate),
+	   strupdatedby = ?,
+	    NBONRATEDECLRNTYPE=?,
+		 DTCOMCFROM=?,
+		 DTCOMCTO=?
+       WHERE lbonhdrseq = ? 
+     </query>
+   </sql>
+   <!--End:28/12/2007:MaybanPH1:sonalb  -->
+   <!--End:23/11/2007:MaybanPH1:rekham  -->
+   <!-- end:08/04/2009:TRM_MBF_POLBEN_00002:sonalb-->
+   <!--Start:23/11/2007:MaybanPH1:rekham:<TaskID>:PRD_Configuration  -->
+   <!--Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout-->
+   <!-- Start : 11/02/2021 : URF29281_ElxirRPMig : Elixir Migration- Phase4:Traditional Regular Premium Products -->
+   <sql Id="ProductBonusDtlUpdate">
+     <query>
+       UPDATE prd_bon_dtl
+       SET   ntermfrom = ?,ntermto = ?,npolyearfrom = ?,npolyearto = ?,nentryagefrom = ?, nentryageto = ?,dactualbonrate = ?,
+	   dtupdated = nvl(?, sysdate),strupdatedby = ?,NCALCDATE=?, DTCALC=?,DSUPERCOMPRATE=?
+       WHERE lbondtlseq = ? 
+     </query>
+   </sql>
+   <!-- End : 11/02/2021 : URF29281_ElxirRPMig : Elixir Migration- Phase4:Traditional Regular Premium Products -->
+   <!--End:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout-->
+   <!--End:23/11/2007:MaybanPH1:rekham  -->
+   <sql Id="ProductBonusVerify">
+     <query>
+       UPDATE prd_bon_hdr
+       SET  strverifiedby = ?, dtverified = ? ,DTUPDATED=?,strupdatedby=?
+       WHERE lbonhdrseq = ? 
+     </query>
+   </sql>
+   <sql Id="ProductBonusAuthorize">
+     <query>
+       UPDATE prd_bon_hdr
+       SET  strauthby = ?, dtauth = ? ,DTUPDATED=?,strupdatedby=?
+       WHERE lbonhdrseq = ? 
+     </query>
+   </sql>
+   <sql Id="UpdateCoiHdr">
+     <query>
+       UPDATE prd_coi_hdr
+       SET dtupdated = nvl(?, sysdate),strcoitbldesc = ?,iunit=?,strupdatedby = ?
+       WHERE strcoitblcd = ?
+     </query>
+   </sql>
+<!-- CR-MegaILP|Added field nissmoker -->
+   <!-- Start TRM_MBF_URF19496_225 -->
+   <!-- Start TRM_MBF_URF20283_230 : MegaILP Agency -->
+   <sql Id="UpdateCoiDtl">
+     <query>
+       UPDATE prd_coi_dtl
+       SET strcoitblcd = ?,nage = ?,ngendercd = ?,nissmoker = ?,
+        ncoveragetype = ?,dmonthlyrate = ?,dtupdated = nvl(?, sysdate),strupdatedby = ?,NCALBASIS=?,NPMTMODE=?,STROCCUPCLASS=?,NMEDDEDOPT=?,NMEDDEDLIMIT=?
+        ,NPOLYEARFROM = ?, NPOLYEARTO = ?, NISGIOIND = ?
+       WHERE lcoitbldtlseq = ?
+     </query>
+   </sql>
+   <!-- End TRM_MBF_URF20283_230 : MegaILP Agency -->
+   <!-- End TRM_MBF_URF19496_225 -->
+   <sql Id="CoiHdrVerify">
+     <query>
+       UPDATE prd_coi_hdr
+       SET  strverifiedby = ?, dtverified = ? ,DTUPDATED=SYSDATE
+       WHERE strcoitblcd = ? 
+     </query>
+   </sql>
+   <sql Id="CoiHdrAuthorize">
+     <query>
+       UPDATE prd_coi_hdr
+       SET  strauthby = ?, dtauth = ?,DTUPDATED=SYSDATE 
+       WHERE strcoitblcd = ? 
+     </query>
+   </sql>
+   <sql Id="UpdateInvLinkChgHdr">
+     <query>
+       UPDATE prd_invest_chg_hdr
+       SET 
+	   dtupdated = nvl(?, sysdate),
+	   strinvesttbldesc = ?,
+	   strupdatedby = ?
+       WHERE strinvesthdrtblcd = ?
+    	</query>
+   </sql>
+   <!-- Start : 29/06/2018 : TRM_URF_21454_56_57_241 : KetanM : Column Added [NPRMTERMTO, NPRMTERMTO] For Premium Payment Term -->
+   <sql Id="UpdateInvLinkChgDtl">
+     <query>
+       UPDATE prd_invest_chg_dtl
+       SET 
+	   strinvesthdrtblcd = ?,
+	   		npolyearfrom = ?, 
+			npolyearto = ?, 
+			NPRMTERMFROM = ?,
+			NPRMTERMTO = ?,
+			drate = ?, 
+			ibasisunit = ?, 
+			dflatamnt = ?, 
+			nhighlowind = ?, 
+			NPMTMODE = ?,
+			
+			dminchgamnt = ?, 
+			dmaxchgamnt = ? ,
+			dbasisrngfrom = ?, 
+			dbasisrngto = ?,
+	   dtupdated = nvl(?, sysdate),
+	   strupdatedby = ?,
+	   nchgtype=?,
+	   nchgbasis=?
+       WHERE linvschgdtlseq = ?
+     </query>
+   </sql>
+   <!-- End : 29/06/2018 : TRM_URF_21454_56_57_241 : KetanM : Column Added [NPRMTERMTO, NPRMTERMTO] For Premium Payment Term -->
+   <sql Id="InvLinkChgHdrVerify">
+     <query>
+       UPDATE prd_invest_chg_hdr
+       SET  strverifiedby = ?, dtverified = ? ,DTUPDATED=SYSDATE 
+       WHERE strinvesthdrtblcd = ? 
+       <!-- AND   nchgtype = ?  -->
+     </query>
+   </sql>
+   <sql Id="InvLinkChgHdrAuthorize">
+     <query>
+       UPDATE prd_invest_chg_hdr
+       SET  strauthby = ?, dtauth = ? ,DTUPDATED=SYSDATE 
+       WHERE strinvesthdrtblcd = ? 
+      <!--  AND   nchgtype = ?  -->
+     </query>
+   </sql>
+<!--Start:16/06/2009:TRM_MBF_ANN_00001:pritirs:Uncommented annuity code-->	
+<!--  Start:24/09/2009:TRM_MBF_ANN_00002 :viniths:Added  NISSAANNSAME in sql Id="UpdateAnnuityDefn"  -->
+<!--28-06-2018 | Pawan Annuity Start here --> 
+   <sql Id="UpdateAnnuityDefn">
+     <query>
+       UPDATE prd_annuity
+       SET strprodcd =?, nprodver =?, naccumanntype =?, nannzanntype =?,
+       nimmdordeferred =?, ndefnbencontr =?, nannvesting =?, niscashoptalow =?,
+       dmaxcashoptperc =?, naccumon =?, nvarannopt =?, nisuwappl =?,
+       dtupdated =?,strupdatedby =?, NISSAANNSAME = ?,NACCUMFUNDTYPE = ?,
+       NISACCUMSHFAPPL = ?,NACCUMSHFFUNDTYPE = ?,NISANNZSHFAPPL = ?,
+       NANNZSHFFUNDTYPE = ?, NLIFETIMEAGELIMIT= ?
+       WHERE lannseq = ? 
+     </query>
+   </sql>
+<!--28-06-2018 | Pawan Annuity End here -->    
+    <!--  End:24/09/2009:TRM_MBF_ANN_00002 :viniths:Added  NISSAANNSAME in sql Id="UpdateAnnuityDefn"  -->
+<!--End:16/06/2009:TRM_MBF_ANN_00001:pritirs-->	
+   <sql Id="AnnuityDefnAuthorize">
+     <query>
+       UPDATE prd_annuity
+       SET  strauthby = ?, dtauth = ? ,DTUPDATED=SYSDATE 
+       WHERE lannseq = ?
+     </query>
+   </sql>
+   <sql Id="AnnuityDefnVerify">
+     <query>
+       UPDATE prd_annuity
+       SET  strverifiedby = ?, dtverified = ? ,DTUPDATED=SYSDATE 
+       WHERE lannseq = ?
+     </query>
+   </sql>
+   <sql Id="UpdateAnnuityVestAge">
+     <query>
+       UPDATE prd_ann_vesting
+       SET nvestingage =?, dtupdated =nvl(?, sysdate), strupdatedby =?
+       WHERE lannseq = ? 
+     </query>
+   </sql>
+   <sql Id="UpdateAnnuityJntPmt">
+     <query>
+       UPDATE prd_ann_jnt_pmt
+       SET njntlifepmttill =?, dtupdated =nvl(?, sysdate), strupdatedby =?
+       WHERE lannseq = ? 
+     </query>
+   </sql>
+   <sql Id="UpdateAnnuityAccumRate">
+     <query>
+       UPDATE prd_ann_accum_rate
+       SET ninforceyearfrom =?, ninforceyearto =?, drate =?,
+       iunit =?, dtupdated =nvl(?, sysdate),strupdatedby =?
+       WHERE lannseq = ? 
+     </query>
+   </sql>
+   <sql Id="UpdateAnnznOptHdr">
+     <query>
+        UPDATE prd_ann_opt_alow
+        SET dtupdated = nvl(?, sysdate),strupdatedby = ?,lannseq =?,nannzoptalow =?,
+        ddefncontrperc =?,nnbrofannpmtben =?,niscertainperd =?
+        WHERE lannoptalowseq = ?
+     </query>
+   </sql>
+   <sql Id="UpdateAnnRateMap">
+     <query>
+       UPDATE prd_ann_tbl_type SET lannseq=?,nyearfrom=?,nyearto=?
+              ,lprmtbltyphdrseq=?,dtverified=?,strverifiedby=?
+              ,dtauth=?,strauthby=?,dtupdated=nvl(?, sysdate),strupdatedby=?
+       WHERE LANNTBLTYPSEQ = ?
+     </query>
+   </sql>
+    <sql Id="UpdateBenAnnPmt">
+     <query>
+       UPDATE prd_ann_ben_pmt SET nphaseflg = ?,nannznopt = ?,njointlifeopt = ?,
+       ndeathof = ?,nannpaystatus = ?,npaymentceases = ?, dbenrate =?,dtupdated = nvl(?, sysdate),
+       strupdatedby = ?
+       WHERE lbenannpmtseq = ?
+     </query>
+   </sql>
+    <sql Id="UpdatePrdLnTrtmt">
+     <query>
+       UPDATE prd_prdln_trtmt_m SET strprodline =?,dlimitamntfrom = ?,
+              dlimitamntto=?,ntreatment=?,npriority=?,strupdatedby=?,dtupdated=nvl(?, sysdate)
+       WHERE lprdlntrtmtseq =?
+     </query>
+   </sql>
+   <!-- Added by Rekha for commontool -->
+   <sql Id="ProdUpdateSQL">
+     <query>
+       UPDATE PRODTEST SET strProdName =?,strProsCd =?
+       WHERE testseq =?
+     </query>
+   </sql>
+   <!-- End -->
+   <!--  Start:05/11/2007:MaybanPH1:rekham:<TaskID>:PRD_RestrictedOccupation --> 
+    <sql Id="RestrictedOccUpdate">
+     <query>
+       UPDATE prd_occ_rest SET strupdatedby=?,dtupdated=nvl(?, sysdate)
+       WHERE strprodcd =? and nprodver=? and stroccupcd=?
+     </query>
+   </sql>
+   <!--  End:05/11/2007:MaybanPH1:rekham --> 
+   <!--  Start:05/11/2007:MaybanPH1:rekham:<TaskID>:PRD_WaiverOfPremium --> 
+   <!-- Start:29/06/2009:CR 23:shweta:Added a new column for WOP Treatment Type -->
+   <sql Id="RidersWaivedUpdate">
+	<query>UPDATE prd_waiver_benefit SET  strupdatedby = ? , dtupdated = nvl(?, sysdate),nTreatmntType=?
+		WHERE strprodcd = ? and nprodver = ? and strriderprodcd = ?
+		and nriderprodver = ?
+	</query>
+   </sql>
+   <!-- End:29/06/2009:CR 23:shweta:Added a new column for WOP Treatment Type -->
+   <!--  End:05/11/2007:MaybanPH1:rekham --> 
+
+   <!-- Sonal -->
+   <sql Id="UpdateThirdPartyDtl">
+	<query>UPDATE prd_thirdparty_relations SET  NRELNCD = ? , STRUPDATEDBY = ? , DTUPDATED = nvl(?, sysdate)
+		WHERE LTHIRDPARTYSEQ = ? 
+	</query>
+   </sql>
+   
+      <!--Start:17/12/2007:MaybanPH1:deenaa: PRD_ExtraMortalityDefinition -->
+   
+   <sql Id="UpdateExtraMortalityDefnHdr">
+     <query>
+		UPDATE PRD_EXTRPRM_HDR
+		SET 
+		  DTUPDATED = nvl(?, sysdate),
+		  DBASIS = ?,
+		  NUNIT = ?,
+		  STRUPDATEDBY = ?
+		WHERE STREXTRAPRMTBLCD = ?
+     </query>
+   </sql>
+   <!-- //start:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+   <!-- vaibhav#777 Start added NPRMTERMFROM and NPRMTERMTO -->    
+   <sql Id="UpdateExtraMortalityDefnDtl">
+     <query>
+		UPDATE PRD_EXTRPRM_DTL
+		SET 
+		    LEXPRMHDRSEQNBR = ?,
+		    NAGEFROM = ?, 
+		    NAGETO = ?, 
+		    NTERMFROM = ?, 
+		    NTERMTO = ?, 
+		    NGENDER = ?,
+		    NPAYMENTMODE = ?,
+		    NEMRATE = ?, 
+		    DRATE = ?, 
+		    DTUPDATED = nvl(?, sysdate),
+		    STRUPDATEDBY = ?,
+		    NISSMOKER = ?,
+		    NNOOFSTICKS = ?,
+		    STROCCUPCLASS=?,
+		    NPRMTERMFROM=?, 
+		    NPRMTERMTO =? 
+		WHERE LEXPRMDTLSEQNBR = ?
+     </query>
+   </sql>
+   <!-- vaibhav#777 End -->    
+   <!-- //End:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+   <sql Id="ExtraMortalityDefnHdrVerify">
+     <query>
+       UPDATE PRD_EXTRPRM_HDR
+       SET  STRVERIFIEDBY = ?, DTVERIFIED = ?,DTUPDATED=SYSDATE  
+       WHERE STREXTRAPRMTBLCD = ?
+     </query>
+   </sql>
+   
+   <sql Id="ExtraMortalityDefnHdrAuthorize">
+     <query>
+       UPDATE PRD_EXTRPRM_HDR
+       SET  STRAUTHBY = ?, DTAUTH = ?,DTUPDATED=SYSDATE  
+       WHERE STREXTRAPRMTBLCD = ? 
+     </query>
+   </sql>
+<!--End :18/09/2007:MaybanPH1:deenaa -->
+<!-- Start: UAT_2387:reviewed by janga:Screen require for RSA Factor Table Setup -->
+  <sql Id="UpdateRSAFactorHdr">
+     <query>
+		UPDATE PRD_RSA_TBL_HDR
+		SET 
+		  DTUPDATED = nvl(?, sysdate),
+		  NBASIS = ?,
+		  NUNIT = ?,
+		  STRUPDATEDBY = ?
+		WHERE STRRSATBLCD = ?
+     </query>
+   </sql>
+   <!-- //start:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+   <sql Id="UpdateRSAFactorDtl">
+     <query>
+		UPDATE PRD_RSA_TBL_Dtl
+		SET 
+		    LRSAHDRSEQNBR = ?,
+		    NPOLYEARFROM = ?, 
+		   	NPOLYEARTO = ?, 
+		    NTERMFROM = ?, 
+		    NTERMTO = ?, 
+		    NDEFERPERD = ?, 
+		    DINTEREST = ?,
+		    DRATE = ?, 
+		    DTUPDATED = nvl(?, sysdate),
+		    STRUPDATEDBY = ?
+		WHERE LRSADTLSEQNBR = ?
+     </query>
+   </sql>
+   <!-- //End:01-SEP-2010:sonalb:2457|UAT|Reviewed by Sonal|added new columns -->
+   <sql Id="RSAFactorHdrVerify">
+     <query>
+       UPDATE PRD_RSA_TBL_HDR
+       SET  STRVERIFIEDBY = ?, DTVERIFIED = ?,DTUPDATED=SYSDATE  
+       WHERE STRRSATBLCD = ?
+     </query>
+   </sql>
+   
+   <sql Id="RSAFactorHdrAuthorize">
+     <query>
+       UPDATE PRD_RSA_TBL_HDR
+       SET  STRAUTHBY = ?, DTAUTH = ?,DTUPDATED=SYSDATE  
+       WHERE STRRSATBLCD = ? 
+     </query>
+   </sql>
+<!-- End: UAT_2387:reviewed by janga:Screen require for RSA Factor Table Setup -->   
+<sql Id="LoyaltyBonusDtlUpdate">
+     <query>
+       UPDATE PRD_LOYALT_BON_DTL
+       SET  NMINPRMPMTYRS = ?,DLOYALTYRATEPERC = ?,DMAXORGPREMPERC = ?,DTUPDATED=SYSDATE 	 
+       WHERE STRPRODCD = ? and NPRODVER	= ? 
+     </query>
+   </sql>
+   
+   <sql Id="GmsvDetailsUpdate">
+     <query>
+       UPDATE PRD_INVEST_GMSV_DTL
+       SET  NPOLYEARFROM = ?,NPOLYEARTO = ?,DRATIO = ?	,DTUPDATED=SYSDATE  
+       WHERE LGMSVDTLSEQ = ? 
+     </query>
+   </sql>
+   <!-- Start:26/12/2007:MaybanPH1:tanujam:<TaskID>:EventBenefit -->
+	<sql Id="UpdateRateScaleOption">
+	
+	<!-- START:25-3-2009:TRM_MBF_PRDPMT_00001:avinashss:Code changes for addition of new field -->	
+		
+	 <query>
+	 		 UPDATE PRD_PERIODIC_RATE_SCALE
+	 		 SET STRPRODCD = ?,
+	 		 	 NPRODVER = ?,
+	 		     NRATESCALEOPTION = ?,
+	 		     DTUPDATED = nvl(?, sysdate),
+	 		     STRUPDATEDBY = ?,	
+	 		     NSTARTYEAR = ? 		      
+	 		 WHERE LRATESCALESEQ = ?
+	 </query>
+	 
+	 <!-- END:25-3-2009:TRM_MBF_PRDPMT_00001:avinashss -->
+	 
+    </sql>
+	<!-- End:26/12/2007:MaybanPH1:tanujam-->
+	
+	<!-- Start:02/01/2008:MaybanPH1:sumedhd:<TaskID>:UpdateBaloonPercDetails -->
+	<sql Id="UpdateBaloonPercDetails">
+	 <query>
+	 		 UPDATE PRD_RTA_BALOON_PERC
+	 		 SET DPERC	 = ?,DTUPDATED=SYSDATE	      
+	 		 WHERE LRTABALOONSEQ = ?
+	 </query>
+    </sql>
+	<!-- End:02/01/2008:MaybanPH1:sumedhd-->
+
+    <!-- Start:04/05/2023||Rohit#10||TRM_MBF_ECNURF_1379_345_P1||update for product unit rule for epf phase-2-->
+    <sql Id="UpdateProductUnitRuleDetails">
+        <query>
+            UPDATE PRD_UNIT_RULE
+            SET NRELNWITHFIRSTLA=?,DOPERATOR=?,DBASIS=?,DRATE=?,DTUPDATED=?,STRUPDATEDBY=?
+            WHERE LUNITRULESEQ=?
+        </query>
+    </sql>
+    <!-- End:04/05/2023||Rohit#10||TRM_MBF_ECNURF_1379_345_P1||update for product unit rule for epf phase-2-->
+	
+	<!-- Start:02/01/2008:MaybanPH1:sumedhd:<TaskID>:UpdateUnearnedPrmDetails -->
+	<!-- Start:07/10/2009:SIT 18 :viniths: Removed DTUPDATED column in sql Id="UpdateUnearnedPrmDetails"-->
+	<sql Id="UpdateUnearnedPrmDetails">
+	 <query>
+	 		 UPDATE PRD_UNEARNED_PRM_DTL
+	 		 SET NDAYSFROM	= ?,NDAYSTO	=?,NPMTMODE	= ?,DBASISUNIT = ?,DPERC = ?--,DTUPDATED=sysdate		
+	 		 WHERE LUNEARNEDSEQ	 = ?
+	 </query>
+    </sql>
+    <!-- End:07/10/2009:SIT 18 :viniths: Removed DTUPDATED column in sql Id="UpdateUnearnedPrmDetails"-->
+	<!-- End:02/01/2008:MaybanPH1:sumedhd-->
+	
+	<!--Start:08/01/2008:MaybanPH1:deenaa: PRD_Quotation Notes-->
+	<!-- start:16/06/2009:TRM_MBF_UL_00008:sonalb:added  order field -->
+   <sql Id="UpdateQuotationNoteDtl">
+     <query>
+		UPDATE PRD_QUOTATION_DTL
+		SET 
+		  STRREMARKS = ?,
+		  DTUPDATED = nvl(?, sysdate),
+		  STRUPDATEDBY = ?,
+		  NORDER = ?
+		WHERE LPRDQUOTDTLSEQNBR = ?
+     </query>
+   </sql>
+   
+   <!-- end:16/06/2009:TRM_MBF_UL_00008:sonalb: -->
+	<!--End :08/01/2008:MaybanPH1:deenaa -->
+	
+	<!--Start:12/01/2008:MaybanPH1:sumedhd: PRD_Reduction Details-->
+	<!-- start:01/04/2008:MaybanPH1:sonalb<defect id 512>:added NEVENTTYPE for event type field -->
+	<sql Id="UpdateAfflnRednDtl">
+     <query>
+		UPDATE PRD_AFFLN_BEN_REDN_DTL
+		SET 
+		  LREDNAFFLNBENDTLSEQ = ?,
+		  NREDNTYPE	= ?,
+		  NREDNBASIS = ?,
+		  DREDVALUE	= ?,
+		  NEVENTTYPE = ?,DTUPDATED=SYSDATE	
+		  WHERE LREDUCTIONDTLSEQ = ?
+     </query>
+   </sql>
+   <!-- end:01/04/2008:MaybanPH1:sonalb<defect id 512>:added NEVENTTYPE for event type field -->
+	
+	<!--End :12/01/2008:MaybanPH1:sumedhd -->
+   
+    <!--Start:12/01/2008:MaybanPH1:sumedhd: PRD_Reduction Details-->
+<!-- Start|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and rate scale value -->
+	<sql Id="UpdateLienSeqDtl">
+     <query>
+		UPDATE PRD_BEN_AGEYRTERM
+		SET 
+		  NTERMFROM = ?,
+		  NTERMTO = ?,
+		  NEVENTAGEFROM = ?,
+		  NEVENTAGETO = ?,
+		  NPOLYEARFROM = ?,
+		  NPOLYEARTO = ?,
+		  DBENRATE = ?,
+		  NPRMPAYTERMFROM=?,
+		  NPRMPAYTERMTO=?,
+		  NRATESCALEOPTION=?,
+		  LAFFLNBENDTLSEQ = ?,DTUPDATED=SYSDATE		
+		  WHERE LAGEYRTERMSEQ = ?
+     </query>
+   </sql>
+<!-- End|17/01/2018|TRM_MBF_URF20283_230 : MegaILP Agency|Ashish Rai|Added for Premium paying term from,Premium paying term to and rate scale value -->
+
+	
+	<!--End :12/01/2008:MaybanPH1:sumedhd -->
+	
+	<sql Id="UpdateRelaunchSQL">
+     <query>
+		UPDATE prd_key_info 
+		set nprodstat=1 ,
+		dtefffrom=to_char(sysdate,'dd-MON-RR'),
+		dteffto =null,
+		dtprodstatchange=to_char(sysdate,'dd-MON-RR') ,DTUPDATED=SYSDATE	
+		where strprodcd= ? and nprodver = ?
+     </query>
+   </sql>
+   <!--start:Vandhana:APL Lapse Options -->
+   <sql Id="UpdateAplLapseTrmtDetails">
+   		<query>
+   			UPDATE PRD_APLLAPSE_TRTMT
+   			SET NAPLLAPSTRTMT = ?,
+   				DTEFFFROM = ?,
+   				STRUPDATEDBY = ?,
+   				DTUPDATED = ?
+   			WHERE LAPLLAPSETRTSEQ = ?
+   		</query>
+   </sql>
+	<!--End:Vandhana:APL Lapse Options -->
+	
+	<!-- Start:prathamesh:05-06-2009:prathameshs:TRM_TKF_PRD_00002:Query added for prd_takaful_m -->
+	<!-- Start:Sunil:06-JAN-2012:CR-279:TRM_MBF_279_00001:field added for Mapex Indicator -->
+	<!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022|field added for Multiple Rate Indicator|START -->
+	<sql Id="WakalahDeductionsUpdate">
+	<query>
+		update prd_takaful_m
+	    set 
+	     strprodcd = ?,
+	     nprodver  = ? ,
+	     nfeetype  = ?, 
+	     nbasis    = ?, 
+	     strfundtypeto = ?, 
+	     strfundtypefrom = ?, 
+	     nratetype  = ? , 
+	     nseqofapplc =?, 
+	     dflatrate =?, 
+	     dflatamount = ?, 
+	     nfrequency =?, 
+	     nunit  = ?, 
+	     nisstaff =?, 
+	     neventtype =?, 
+	     strupdatedby =?, 
+	     dtupdated = sysdate,
+	     nismapexapp = ?,
+	     nismultirateapplc = ?	     
+	     where ltkfmodelseq = ?
+	</query>
+	</sql>
+	<!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022|END -->
+	<!-- End:Sunil:06-JAN-2012:CR-279:TRM_MBF_279_00001:field added for Mapex Indicator -->
+	<!--   //Start:3/11/2014:TRM_MBF_CR434_0136:added takaful rate type -->
+	<!-- Start:25-Oct-2017:TRM_MBF_URF19496_225:Added NPRMTERMFROM,NPRMTERMTO -->
+	<!-- Start TRM_MBF_URF20283_230 : MegaILP Agency -->
+	<!-- Start:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added NCOVERAGETYPE,STROCCUPCLASS -->
+	<!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022| fields DTEFFFROM, DTEFFTO| START -->
+	<sql Id="WakalahVarRatesUpdate">
+	<query>
+		 update prd_takaful_rate_dtl
+	     set 
+	     ltkfmodelseq=?, 
+	     npolyrfrom=?, 
+	     npolyrto=?, 
+	     ntermfrom=?, 
+	     ntermto=?, 
+	     ngender=?, 
+	     nagefrom=?, 
+	     nageto=?, 
+	     nbasisfrom=?, 
+	     nbasisto=?, 
+	     drate=?, 
+	     damount=?, 
+	     NRATETYPE=?,
+	     dtupdated=sysdate, 
+	     strupdatedby=?
+	     ,NPRMTERMFROM=?
+		 ,NPRMTERMTO=?
+		 ,NISSMOKER = ?
+		 ,NISGIOIND = ?
+		 ,NCOVERAGETYPE = ?
+		 ,STROCCUPCLASS = ?
+		 ,DTEFFFROM = ?
+		 ,DTEFFTO = ?
+	     where ltkfrateseq =?
+	</query>
+	</sql>
+	<!-- ManjunathH|TRM_MBF_URF_24268_338_MULT_WKL_RATE|10-SEP-2022| END -->
+	<!-- End:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added NCOVERAGETYPE,STROCCUPCLASS -->
+	<!-- End TRM_MBF_URF20283_230 : MegaILP Agency -->
+	<!-- End:25-Oct-2017:TRM_MBF_URF19496_225:Added NPRMTERMFROM,NPRMTERMTO -->
+	<!--   //Start:3/11/2014:TRM_MBF_CR434_0136:added takaful rate type -->
+	<!-- End:prathamesh:05-06-2009:prathameshs:TRM_TKF_PRD_00002 -->
+	<!-- Start:prathameshs:9-6-2009:TRM_TKF_PRD_00003:Query added for partial withdrawal setup update -->
+	<sql Id="TkfPartialWithdrawalUpdate">
+	<query>
+		Update prd_tkf_part_withd_m
+	    set
+	      
+	        strprodcd=?, 
+	        nprodver=?, 
+	        nwithdstartyear=?, 
+	        nmaxwithdallwd=?, 
+	        dminwithamnt=?, 
+	        dminpabalamnt=?, 
+	        dminpabalperc=?, 
+	        nrateamtcriteria=?, 
+	        dwithdfee=?, 
+	        dtupdated=SYSDATE,
+	        strupdatedby=?
+	    
+	    where ltkfpartwithdseq=? 
+	</query>
+	</sql>
+	<sql Id="TkfPartialWithdrawalDtlUpdate">
+	<query>
+		update prd_tkf_part_withd_dtl
+	    set
+	    
+	        ltkfpartwithdseq=?, 
+	        npolyrfrom=?, 
+	        npolyrto=?, 
+	        dmaxrate=?, 
+	        nyrsbfrmaturityfrom=?, 
+	        nyrsbfrmaturityto=?, 
+	        dtupdated = SYSDATE, 
+	        strupdatedby =?
+	    
+	    where ltkfpartwithddtlseq=?
+	</query>
+	</sql>
+	<!-- End:prathameshs:9-6-2009:TRM_TKF_PRD_00003 -->	
+	
+	 <!-- Start:04/06/2009:anupd:TRM_TKF_PRD_00005:Added update query for surplus sharing -->
+	 <sql Id="UpdateHdrRec">
+   		<query>
+   			UPDATE PRD_TKF_SHARING_DECLR_M
+   			SET NSHARETYPE = ?,
+   				NRATETYPE = ?,
+   				DTUPDATED = SYSDATE, 
+   				STRUPDATEDBY = ?
+   			WHERE LSHAREDECLSEQ = ?
+   		</query>
+   </sql>
+   	 <sql Id="UpdateDtlRec">
+   		<query>
+   			UPDATE PRD_TKF_SHARING_DTL
+   			SET STRFUNDTYPE = ?,
+   				NRATEFLAT = ?,
+   				DTUPDATED = SYSDATE,
+   				STRUPDATEDBY = ?
+   			WHERE LSHAREDTLSEQ = ?
+   		</query>
+   </sql>
+ <!-- End:04/06/2009:anupd:TRM_TKF_PRD_00005:Added update query for surplus sharing -->
+ 	 <!-- Start:07/06/2009:anupd:TRM_TKF_PRD_00004:Added update query for Top up -->
+   <sql Id="UpdateTopUpRec">
+   		<query>
+   			UPDATE PRD_TKF_TOPUP_RULES 
+   			SET 	NMAXNBRTPUPPRYR=?,
+		   			NMAXTOPUPRATE=?,
+		   			NBASIS=?,
+		   			NRATEOFALLOC=?,
+		   			STRFUNDTYPE=?,
+		   			DTUPDATED=SYSDATE,
+		   			STRUPDATEDBY=? 
+   			WHERE   STRPRODCD=? 
+   			AND     NPRODVER=?
+   		</query>
+   </sql>
+   	 <!-- End:07/06/2009:anupd:TRM_TKF_PRD_00004:Added update query for Top up -->
+   	 
+   	 <!-- start:CR280:06/01/2012:mrunal:added STRCOITBLCD-->
+   	 <!-- Start|CR362|TRM_MBF_362_0043|Ram|Non Annuity type setup added-->
+   	 <!-- Start|UAT|7319|21-02-12|Ram|To save admin fee value (Table/Flat)-->
+   	 <sql Id="SettlementUpdate">
+   		<query>
+   			UPDATE prd_settlement_dtl
+   			SET 
+   			nsettleperiod = ?,
+   			nstlmntagefrm = ?,
+   			nstlmntageto = ?,
+   			dminamount = ?,
+   			dadminfee = ?,
+   			dmintopupamount = ?,
+   			dmultipleof = ?,
+   			dtopupcharge = ?,
+   			ntopuppolyr = ?,
+   			npmntfactor = ?,
+   			nadminfactor = ?, dmgmtpercnt = ?, dtupdated=?, strupdatedby=?, STRCOITBLCD=?,
+   			strnonanntblcd = ?,
+   			NISADMINFLAT = ?
+   			Where strprodcd =?
+   			AND nprodver = ?   		
+   		</query>
+   	</sql>
+   	<!-- end|UAT|7319|21-02-12|Ram|To save admin fee value (Table/Flat)-->
+   	<!-- End|CR362|TRM_MBF_362_0043|Ram|Non Annuity type setup added-->
+   	<!-- end:CR280:06/01/2012:mrunal:added STRCOITBLCD-->
+   	
+   	<!-- start:TRM_MBF_280_00002:CR280:29/12/2011:mrunal:added -->
+   	<!-- start:TRM_MBF_280_00002:CR280:09/01/2012:mrunal:added new columns NTERMFROM and NTERMTO -->
+   		<sql Id="UpdatePrdScaleFactor">
+   			<query>
+   				UPDATE PRD_SCALE_FACTOR
+				SET
+					STRPRODCD = ?,
+					NPRODVER = ?,
+					NUNPINSTFRM = ?,
+					NUNPINSTTO = ?,
+					DFACTOR = ?,
+					DTUPDATED = ?,
+					STRUPDATEDBY = ?,
+					NTERMFROM = ?,
+					NTERMTO = ?
+				WHERE LSCALEFCTRSEQ = ?
+   			</query>
+   		</sql>
+    <!-- end:TRM_MBF_280_00002:CR280:09/01/2012:mrunal:added new columns NTERMFROM and NTERMTO -->
+   	<!-- end:TRM_MBF_280_00002:CR280:29/12/2011:mrunal:added -->
+   	 <!-- CR 280 TRM_MBF_280_00002 START-->
+   	<sql Id = "UpdateAdminFee">
+   	<query>
+   	UPDATE PRD_ADMIN_FEE_M
+   	SET
+   	npolyrfrom = ?,
+   	npolyrto = ?,
+   	dadminfee = ?   
+   	where ladminfeeseq = ?
+   	</query>
+   	
+   	</sql>
+   	<!-- start:sunil:18/01/2012:TRM_MBF_280_00002:adding term from and term to fields -->
+   	<sql Id = "UpdatePRDAllocRate">
+   	<query>
+   	UPDATE PRD_ALLOC_RATES
+   	SET
+   	npolyrfrom = ?,
+   	npolyrto = ?,
+   	nisstaff= ?,   
+   	dallocrate = ?,
+   	ntermfrom = ?,
+   	ntermto = ?
+   	where lallocrateseq = ?
+   	</query>
+   	<!-- end:sunil:18/01/2012:TRM_MBF_280_00002:adding term from and term to fields -->
+   	   	
+   	</sql>
+   	
+   		 <!-- CR 280 TRM_MBF_280_00002 END-->
+   		 
+  <!--End: :CR 335|Lien Master for SI --> 
+   <sql Id="UpdateJuvHdrLienSI">
+     <query>
+       UPDATE PRD_JUV_HDR
+       SET 
+	   DTUPDATED = NVL(?, SYSDATE),	   
+	   STRUPDATEDBY = ?
+       WHERE LJUVHDRSEQ = ?
+    </query>
+   </sql>
+   <sql Id="UpdateJuvDtlLienSI">
+     <query>
+       UPDATE PRD_JUV_DTL
+       SET 
+	   		NAGEFROM = ?, 
+			NAGETO = ?, 
+			DRATE = ?,
+	   		dtupdated = nvl(?, sysdate),
+	   		strupdatedby = ?
+       WHERE LJUVDTLSEQ = ?
+     </query>
+   </sql>
+   <!--End: :CR 335|Lien Master for SI -->
+   
+<!-- Start:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+	<sql Id="UpdateAutoExtraUnitAuthorize">
+		<query>
+			UPDATE  PS_AUTO_EXTRA_UNIT_WITHDRAW 
+			SET 
+			NISAUTH =? ,
+			DTAUTH = ?,
+			STRAUTHBY  =?,
+			STRUPDATEDBY = ?,
+			DTUPDATED = ?,
+			NSTATUS = ?
+			WHERE LBONHDRSEQ =? 
+		</query>
+	</sql>
+	<!-- End:CR-340|ravis|6-2-2013|Tracebility Code :TRM_MBF_340_0047|added for cash payout -->
+<!--Start:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added SAM Factor for Elite Investment product-->
+   	<sql Id="UpdatePRDSAMFactor">
+   	<query>
+		UPDATE PRD_SAM_FACTOR SET NAGEFROM=?,NAGETO=?,NSAMFACTOR=?,DTUPDATED=SYSDATE,STRUPDATEDBY=?
+		WHERE LSAMFACTSEQ=?
+   	</query>
+   </sql>
+   <!--End:CR-365|Tracebility No.:TRM_MBF_CR365_0058|ravis|16-05-2013|added SAM Factor for Elite Investment product-->
+   
+   <!-- Start |Pranav |01-06-2022 | TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility -->
+   <sql Id="UpdateBoosterElgRl">
+   	<query>
+		UPDATE prd_vsa_prm_booster_rules SET STRELIGIBILITYDESC = ?, NELIGIBILITY = ?, DTUPDATED = SYSDATE
+		WHERE LVSAPRMELIGIBLSEQ = ?
+   	</query>
+   </sql>
+   <!-- End |Pranav |01-06-2022 | TRM_MBF_ECNURF_162_P2 | Added function for Booster Eligibility -->
+   
+<!--Start:CR-365|SunilN|27-MAY-2013|Tracebility No.:TRM_MBF_CR365_0058|added query for Loayalty bonus for ELITE Investmentlink Product-->
+<!-- START:24/7/2014:DEFECT-9758:added NPREMBASIS field -->
+    <!--TRM_MBF_URF_24268_346/Loyalty Bonus CR/Added STRFUNDTYPE/SanketP/start-->
+  	<sql Id="UpdateLoyaltyBonus">
+	   	<query>
+			UPDATE PRD_LOYALT_BON_DTL
+				SET
+					NMINPRMPMTYRS = ?,
+					DLOYALTYRATEPERC = ?,
+					DMAXORGPREMPERC = ?,
+					NPREMBASIS=?,
+                    STRFUNDTYPE=?,
+					DTUPDATED = SYSDATE
+				WHERE
+					LLOYATBONSEQ = ?
+	   	</query>
+    </sql>
+    <!--TRM_MBF_URF_24268_346/Loyalty Bonus CR/Added STRFUNDTYPE/SanketP/End-->
+<!-- END:24/7/2014:DEFECT-9758:added NPREMBASIS field -->
+<!--End:CR-365|SunilN|27-MAY-2013|Tracebility No.:TRM_MBF_CR365_0058|added query for Loayalty bonus for ELITE Investmentlink Product-->   
+<!--Start:CR264:1-oct-2013:TRM_MBF_CR264_0067:Added new screen for Takaful rate master.--> 
+	<sql Id="TakafulRateUpdate">
+     <query>
+       UPDATE intf_withholding_tax_dtl
+       SET  
+	   dtefffrom = ?,
+	   dteffto = ?,
+	   strprodcd = ?,
+	   nprodver = ?,
+	   NBASIS = ?,
+	   NUNIT = ?,
+	   nfiscalyear = ? ,
+	   dtupdated = nvl(?, sysdate),
+	   strupdatedby = ?,
+	   NDECLARATIONTYPE=?,
+	   NCLIENTTYPE=?,
+	   NFUNDTYPE=?,
+	   DGROSSRATE = ?,     
+		DTAXRATE  = ?,      
+		DNETRATE  = ?, 
+		DGROSSAMNT = ?,     
+		DTAXAMNT = ?,       
+		DNETAMNT = ?
+       WHERE LWHTSEQ = ? 
+     </query>
+   </sql>
+   	<sql Id="TakafulRateStatusUpdate">
+     <query>
+       UPDATE intf_withholding_tax_dtl
+       SET  
+	   NSTATUS = ?
+	   ,dtupdated = nvl(?, sysdate)
+	   ,strupdatedby = ?
+       WHERE LWHTSEQ = ? 
+     </query>
+   </sql>
+   <!--End:CR264:1-oct-2013:TRM_MBF_CR264_0067:Added new screen for Takaful rate master.-->    
+   	<!-- Start:27-NOV-2013:CR389:TRM_MBF_CR389_0085:SunilN:added for Investment Link - Top up allocation rate details-->
+	<sql Id="UpdateTopUpAllocRates">
+		<query>
+			UPDATE PRD_TOPUP_ALLOC_RATES 
+			  SET
+			      NTERMFROM = ?, 
+			      NTERMTO = ?,
+			      NPOLYRFROM = ?,
+			      NPOLYRTO = ?,
+			      NISSTAFF = ?,
+			      DALLOCRATE = ?,
+			      STRUPDATEDBY = ?,
+			      DTUPDATED = SYSDATE
+			  WHERE LTOPUPALLOCRATESEQ = ?  
+		</query>
+	</sql>
+	<!-- End:27-NOV-2013:CR389:TRM_MBF_CR389_0085:SunilN:added for Investment Link - Top up allocation rate details -->  
+	<!-- Start:20-MAR-2015:CR458-TRM_MBF_CR458_160:SunilN: -->
+	<sql Id="UpdateMinMaxLoanAmountDetails">
+		<query>
+		       UPDATE PRD_MINMAX_LOAN_AMT
+				SET 
+					strprodcd = ?, nprodver = ? , neagefrommale = ?,
+					neagetomale = ?, neagefromfemale = ?, neagetofemale = ?,
+					dmaxloanamt = ?, dminloanamt = ? ,strupdatedby = ?,
+					dtupdated = SYSDATE
+				WHERE lminmaxlaseq = ? 
+		</query>
+	</sql> 
+	<!-- End:20-MAR-2015:CR458-TRM_MBF_CR458_160:SunilN: -->
+	<!-- Start:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group -->
+	<sql Id="UpdatePRDSAGrpDetails">
+		<query>
+		       UPDATE PRD_MAXSA_SP_PARAM_DTL
+				SET 
+					NGENDER = ?, NENTRYAGEFROM = ?, NENTRYAGETO = ?, 
+					DMAXPARAMVALUE = ?, strupdatedby = ?, dtupdated = SYSDATE
+				WHERE LGRPPRDSEQ = ? 
+		</query>
+	</sql> 
+	<!-- End:URF129219:08-JUL-2015:BrijeshP:TRM_MBF_URF129219_171:Added for product sum assured group -->
+	<!-- START:URF136967: 21/3/2017:LokeshR:Added for Affln detail -->
+	<sql Id="UpdateAfflictionDtl">
+		<query>
+			UPDATE PRD_EVENT_BEN_MAP_AFFLN 
+			 SET
+			 	NEVENTAGEFROM = ?, NEVENTAGETO = ?, STRAFFLNSCHEDNBR = ?, DTUPDATED = nvl(?, sysdate) ,STRUPDATEDBY = ? 
+			 WHERE LEVENTAFFLNSEQ = ?
+		</query>
+	</sql>
+	<!-- END:URF136967: 21/3/2017:LokeshR:Added for Affln detail -->
+	
+	<!-- Start:02-Jan-2018:TRM_MBF_URF20283_230:Added to update Component Details -->
+	<sql Id="UpdateComponentData">
+		<query>
+			UPDATE PRD_COMPONENT_M 
+			SET
+			STRPRODCD = ?, NPRODVER = ?, NTYPE = ?, STRCOMPONENTCD = ?,
+			DPERCENTAGE = ?, DAMOUNT = ?, STRUPDATEDBY = ? 
+			WHERE LPRDCOMPONENTSEQ = ?
+		</query>
+	</sql>
+	<!-- End:02-Jan-2018:TRM_MBF_URF20283_230:Added to update Component Details -->
+	<!-- Start:30/05/2018:Ashish R: TRM_MBF_CR372_239: Code Added for Golden Retirement -->
+	<sql Id="InvestmentHdrUpdate">
+     <query>
+     UPDATE prd_bon_hdr SET  
+	 CBONTYPE = ?,
+	 strprodcd = ?,
+	 nprodver = ?,
+	 STRFUNDNAME = ?,
+     STRFUNDCD = ?,
+     NACCYEARFROM=?,
+     NACCYEARTO=?,
+     NPAYYEARFROM=?,
+     NPAYYEARTO=?,
+     NGMCPMT_PERC=?,
+	 nbonbas = ?,
+	 nbonunit = ?,
+	 dtupdated = nvl(?, sysdate),
+	 strupdatedby = ?
+	 WHERE lbonhdrseq = ? 
+     </query>
+   </sql>
+   <sql Id="InvestmentDtlUpdate">
+     <query>
+       UPDATE prd_bon_dtl
+       SET   npolyearfrom = ?,npolyearto = ?,dactualbonrate = ?,
+	   dtupdated = nvl(?, sysdate),strupdatedby = ?,NCALCDATE=?
+       WHERE lbondtlseq = ? 
+     </query>
+   </sql>
+	
+    <sql Id="InvestmentAuthorize">
+     <query>
+       UPDATE prd_bon_dtl
+       SET  DTUPDATED=?,strupdatedby=?,nstatus=?
+       WHERE lbondtlseq = ? 
+     </query>
+   </sql>
+<!-- End:30/05/2018:Ashish R: TRM_MBF_CR372_239: Code Added for Golden Retirement -->
+
+	<!-- Start:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added for Loyalty bonus changes -->
+	<!-- Start:10-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Loyalty bonus change enhancement:Added EFFCTIVEFROM, EFFECTIVETO & UNIT -->
+	<!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-Start Added STRFUNDTYPE-->
+	<sql Id="UpdateJumboLoyaltyBonus">
+     <query>
+       UPDATE PRD_LOYALT_BON_BENIF_DTL
+       SET  BASIS = ?,
+       NPOLICYYEARFROM = ?,
+       NPOLICYYEARTO = ?,
+       RATE = ?,
+       FREQ = ?,
+       EFFCTIVEFROM = ?,
+       EFFECTIVETO = ?,
+       UNIT = ?,
+         STRFUNDTYPE=?
+       WHERE LLOYATBONBSEQ = ? 
+     </query>
+   </sql>
+   <!-- Loyalty_Bonus_CR_development-2023-04-10_SanketP-Start Added STRFUNDTYPE-->
+   <!-- End:10-Aug-2018:TRM_URF_21454_56_57_241_P2:Jumbo PH2:Added for Loyalty bonus change enhancement:Added EFFCTIVEFROM, EFFECTIVETO & UNIT -->
+	<!-- End:06-Jun-2018:TRM_URF_21454_56_57_241:Jumbo ILP:Added for Loyalty bonus changes -->
+	<!-- Start : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 -->
+	<sql Id="InvCompDetailsUpdate">
+      <query>
+          UPDATE PRD_BEN_COMP_MAP  
+          SET STRPRODCD = ?, NPRODVER = ?, NBENTYPE = ?, 
+          NCOMPCD = ?, NCOMPFLAG = ?, NEVENTTYPE = ?, 
+          DTUPDATED = SYSDATE, STRUPDATEDBY = ?   
+          WHERE LMAPSEQ = ?    
+      </query>
+   </sql>
+   <!-- End : 21/05/2020 : TRM_MBF_URF24268_P2_298 : Changes For IFRS Finance Phase 2 -->
+</sql-root>
